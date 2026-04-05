@@ -1,0 +1,239 @@
+// backend/src/controllers/adminController.js
+const pool = require("../config/db");
+const crypto = require("crypto");
+
+const registerVoter = async (req, res) => {
+  const { student_id, full_name, department, email } = req.body;
+  const adminId = req.user.id;
+
+  if (!student_id || !full_name) {
+    return res.status(400).json({
+      success: false,
+      message: "Student ID and full name are required",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+      INSERT INTO voters (student_id, full_name, department, email)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (student_id) DO NOTHING
+      RETURNING id, student_id, full_name
+    `,
+      [student_id.toUpperCase(), full_name, department, email],
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(409)
+        .json({ success: false, message: "Student ID already exists" });
+    }
+
+    // Log action
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+    `,
+      ["VOTER_REGISTERED", adminId, req.user.role, { student_id, full_name }],
+    );
+
+    res.json({
+      success: true,
+      message: "Voter registered successfully",
+      voter: result.rows[0],
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to register voter" });
+  }
+};
+
+const getCandidates = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, name, position, bio, photo_url 
+      FROM candidates 
+      ORDER BY position, name
+    `);
+    res.json({ success: true, candidates: result.rows });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch candidates" });
+  }
+};
+
+const addCandidate = async (req, res) => {
+  const { name, position, bio } = req.body;
+  const adminId = req.user.id;
+
+  if (!name || !position) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Name and position are required" });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+      INSERT INTO candidates (name, position, bio)
+      VALUES ($1, $2, $3)
+      RETURNING id, name, position
+    `,
+      [name, position, bio],
+    );
+
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+    `,
+      ["CANDIDATE_ADDED", adminId, req.user.role, { name, position }],
+    );
+
+    res.json({
+      success: true,
+      message: "Candidate added successfully",
+      candidate: result.rows[0],
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to add candidate" });
+  }
+};
+
+const generateVoterToken = async (req, res) => {
+  const { student_id } = req.body;
+  const adminId = req.user.id;
+  const adminRole = req.user.role;
+
+  if (!student_id) {
+    return res.status(400).json({
+      success: false,
+      message: "Student ID is required",
+    });
+  }
+
+  try {
+    // 1. Check if election is active
+    const electionCheck = await pool.query(
+      "SELECT is_active FROM election_settings LIMIT 1",
+    );
+
+    if (!electionCheck.rows[0]?.is_active) {
+      return res.status(400).json({
+        success: false,
+        message: "Election is currently closed by Super Admin",
+      });
+    }
+
+    // 2. Check if voter exists and hasn't voted yet
+    const voterResult = await pool.query(
+      `SELECT id, full_name, has_voted 
+       FROM voters 
+       WHERE student_id = $1`,
+      [student_id],
+    );
+
+    if (voterResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Voter with this Student ID not found",
+      });
+    }
+
+    const voter = voterResult.rows[0];
+
+    if (voter.has_voted) {
+      return res.status(400).json({
+        success: false,
+        message: "This student has already voted",
+      });
+    }
+
+    // 3. Generate secure random token (64 hex characters)
+    const tokenValue = crypto.randomBytes(32).toString("hex");
+
+    // 4. Set 15 minutes expiry
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    // 5. Save token to database
+    const tokenInsert = await pool.query(
+      `
+      INSERT INTO tokens (voter_id, token_value, generated_by, expires_at)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, token_value, expires_at
+    `,
+      [voter.id, tokenValue, adminId, expiresAt],
+    );
+
+    // 6. Log this action
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+    `,
+      [
+        "TOKEN_GENERATED",
+        adminId,
+        adminRole,
+        {
+          student_id: student_id,
+          voter_name: voter.full_name,
+          token_id: tokenInsert.rows[0].id,
+        },
+      ],
+    );
+
+    // 7. Return token to admin
+    res.json({
+      success: true,
+      message:
+        "Token generated successfully. Please write it down and give to the student.",
+      token: tokenValue,
+      expires_in: 900, // 15 minutes
+      voter_name: voter.full_name,
+      student_id: student_id,
+    });
+  } catch (error) {
+    console.error("Generate token error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error while generating token",
+    });
+  }
+};
+
+// Get all voters (for admin dashboard)
+const getAllVoters = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, student_id, full_name, department, has_voted, created_at 
+      FROM voters 
+      ORDER BY student_id ASC
+    `);
+
+    res.json({
+      success: true,
+      count: result.rows.length,
+      voters: result.rows,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to fetch voters" });
+  }
+};
+
+module.exports = {
+  registerVoter,
+  generateVoterToken,
+  getAllVoters,
+  getCandidates,
+  addCandidate,
+};
