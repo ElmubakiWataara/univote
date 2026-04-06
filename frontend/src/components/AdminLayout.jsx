@@ -15,13 +15,13 @@ const AdminLayout = ({ children }) => {
     {
       id: "dashboard",
       label: "Dashboard",
-      icon: "📊",
+      icon: "",
       path: "/admin/dashboard",
     },
     {
       id: "voters",
       label: "Manage Voters",
-      icon: "👥",
+      icon: "",
       submenu: [
         {
           id: "register-voter",
@@ -43,7 +43,7 @@ const AdminLayout = ({ children }) => {
     {
       id: "candidates",
       label: "Manage Candidates",
-      icon: "🏆",
+      icon: "",
       submenu: [
         {
           id: "add-candidate",
@@ -75,9 +75,7 @@ const AdminLayout = ({ children }) => {
       >
         {/* Logo */}
         <div className="p-6 flex items-center gap-3 border-b border-white/10">
-          <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center text-2xl">
-            🗳️
-          </div>
+          <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center text-2xl"></div>
           {sidebarOpen && (
             <span className="font-bold text-2xl tracking-tight">UniVote</span>
           )}

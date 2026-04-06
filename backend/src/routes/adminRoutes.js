@@ -9,6 +9,8 @@ const {
   registerVoter,
   getCandidates,
   addCandidate,
+  updateVoter,
+  deleteVoter,
 } = require("../controllers/adminController");
 
 // Protect all admin routes
@@ -20,5 +22,7 @@ router.post("/generate-token", generateVoterToken);
 router.get("/voters", getAllVoters);
 router.get("/candidates", getCandidates);
 router.post("/candidates", addCandidate);
+router.put("/voters/:id", updateVoter);
+router.delete("/voters/:id", deleteVoter);
 
 module.exports = router;

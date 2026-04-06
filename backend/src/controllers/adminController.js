@@ -2,6 +2,96 @@
 const pool = require("../config/db");
 const crypto = require("crypto");
 
+const updateVoter = async (req, res) => {
+  const { id } = req.params;
+  const { student_id, full_name, department, email } = req.body;
+  const adminId = req.user.id;
+
+  try {
+    // Check current voter status
+    const current = await pool.query(
+      "SELECT has_voted FROM voters WHERE id = $1",
+      [id],
+    );
+    const hasVoted = current.rows[0]?.has_voted;
+
+    let query = `
+      UPDATE voters 
+      SET full_name = $1, department = $2, email = $3
+    `;
+    let params = [full_name, department, email];
+
+    // Only allow student_id change if voter has not voted
+    if (!hasVoted && student_id) {
+      query += `, student_id = $4`;
+      params.push(student_id);
+    }
+
+    query += ` WHERE id = $${params.length + 1} RETURNING *`;
+    params.push(id);
+
+    const result = await pool.query(query, params);
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Voter not found" });
+    }
+
+    // Audit log
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+    `,
+      ["VOTER_UPDATED", adminId, req.user.role, { voter_id: id, full_name }],
+    );
+
+    res.json({
+      success: true,
+      message: "Voter updated successfully",
+      voter: result.rows[0],
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to update voter" });
+  }
+};
+
+const deleteVoter = async (req, res) => {
+  const { id } = req.params;
+  const adminId = req.user.id;
+
+  try {
+    // Check if voter has voted
+    const check = await pool.query(
+      "SELECT has_voted FROM voters WHERE id = $1",
+      [id],
+    );
+    if (check.rows[0]?.has_voted) {
+      return res.status(400).json({
+        success: false,
+        message: "Cannot delete voter who has already voted",
+      });
+    }
+
+    await pool.query("DELETE FROM voters WHERE id = $1", [id]);
+
+    // Audit log
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+    `,
+      ["VOTER_DELETED", adminId, req.user.role, { voter_id: id }],
+    );
+
+    res.json({ success: true, message: "Voter deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to delete voter" });
+  }
+};
 const registerVoter = async (req, res) => {
   const { student_id, full_name, department, email } = req.body;
   const adminId = req.user.id;
@@ -216,7 +306,7 @@ const getAllVoters = async (req, res) => {
     const result = await pool.query(`
       SELECT id, student_id, full_name, department, has_voted, created_at 
       FROM voters 
-      ORDER BY student_id ASC
+      ORDER BY created_at DESC
     `);
 
     res.json({
@@ -236,4 +326,6 @@ module.exports = {
   getAllVoters,
   getCandidates,
   addCandidate,
+  updateVoter,
+  deleteVoter,
 };

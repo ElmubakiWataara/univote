@@ -10,11 +10,23 @@ const AddCandidate = () => {
     position: "",
     bio: "",
   });
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
   const { token: authToken } = useAuth();
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPhoto(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setPhotoPreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,14 +35,27 @@ const AddCandidate = () => {
     setSuccess("");
 
     try {
+      const form = new FormData();
+      form.append("name", formData.name);
+      form.append("position", formData.position);
+      form.append("bio", formData.bio);
+      if (photo) form.append("photo", photo);
+
       const res = await axios.post(
         "http://localhost:3000/api/admin/candidates",
-        formData,
-        { headers: { Authorization: `Bearer ${authToken}` } },
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+            "Content-Type": "multipart/form-data",
+          },
+        },
       );
 
       setSuccess(`Candidate "${res.data.candidate.name}" added successfully!`);
       setFormData({ name: "", position: "", bio: "" });
+      setPhoto(null);
+      setPhotoPreview(null);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to add candidate");
     } finally {
@@ -50,6 +75,36 @@ const AddCandidate = () => {
 
         <div className="bg-white rounded-3xl shadow p-10">
           <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Photo Upload Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Candidate Photo (Optional)
+              </label>
+              <div className="border-2 border-dashed border-gray-300 rounded-3xl p-10 text-center">
+                {photoPreview ? (
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
+                    className="mx-auto h-48 w-48 object-cover rounded-2xl shadow"
+                  />
+                ) : (
+                  <div className="text-gray-400 text-7xl mb-4">📸</div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                  id="photo-upload"
+                />
+                <label
+                  htmlFor="photo-upload"
+                  className="cursor-pointer text-indigo-600 hover:text-indigo-700 font-medium block mt-4"
+                >
+                  {photoPreview ? "Change Photo" : "Click to Upload Photo"}
+                </label>
+              </div>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name

@@ -9,7 +9,7 @@ lerna-debug.log*
 
 node_modules
 dist
-client/build/
+frontend/build/
 dist-ssr
 *.local
 .env
