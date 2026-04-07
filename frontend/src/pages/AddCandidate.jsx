@@ -38,7 +38,7 @@ const AddCandidate = () => {
       const form = new FormData();
       form.append("name", formData.name);
       form.append("position", formData.position);
-      form.append("bio", formData.bio);
+      if (formData.bio) form.append("bio", formData.bio);
       if (photo) form.append("photo", photo);
 
       const res = await axios.post(
@@ -47,7 +47,7 @@ const AddCandidate = () => {
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
-            "Content-Type": "multipart/form-data",
+            // Do NOT set Content-Type manually when using FormData
           },
         },
       );
@@ -57,7 +57,11 @@ const AddCandidate = () => {
       setPhoto(null);
       setPhotoPreview(null);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to add candidate");
+      console.error(err);
+      setError(
+        err.response?.data?.message ||
+          "Failed to add candidate. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -88,7 +92,7 @@ const AddCandidate = () => {
                     className="mx-auto h-48 w-48 object-cover rounded-2xl shadow"
                   />
                 ) : (
-                  <div className="text-gray-400 text-7xl mb-4">📸</div>
+                  <div className="text-gray-400 text-7xl mb-4"> </div>
                 )}
                 <input
                   type="file"
@@ -105,6 +109,7 @@ const AddCandidate = () => {
                 </label>
               </div>
             </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name

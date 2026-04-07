@@ -157,26 +157,36 @@ const getCandidates = async (req, res) => {
   }
 };
 
+// Add this function (or replace the existing one)
 const addCandidate = async (req, res) => {
   const { name, position, bio } = req.body;
   const adminId = req.user.id;
 
+  // Debug log to see what is actually being received
+  // console.log("Received data:", req.body);
+  // console.log("Received file:", req.file);
+
   if (!name || !position) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Name and position are required" });
+    return res.status(400).json({
+      success: false,
+      message: "Candidate name and position are required",
+    });
   }
 
   try {
+    // Handle photo upload (if using multer or similar)
+    const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
     const result = await pool.query(
       `
-      INSERT INTO candidates (name, position, bio)
-      VALUES ($1, $2, $3)
-      RETURNING id, name, position
+      INSERT INTO candidates (name, position, bio, photo_url)
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, name, position, bio, photo_url
     `,
-      [name, position, bio],
+      [name.trim(), position.trim(), bio || null, photoUrl],
     );
 
+    // Audit log
     await pool.query(
       `
       INSERT INTO audit_logs (action, actor_id, actor_role, details)
@@ -191,10 +201,139 @@ const addCandidate = async (req, res) => {
       candidate: result.rows[0],
     });
   } catch (error) {
+    console.error("Add candidate error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to add candidate",
+    });
+  }
+};
+
+//Update candidate
+const updateCandidate = async (req, res) => {
+  const { id } = req.params;
+  const { name, position, bio } = req.body;
+  const adminId = req.user.id;
+
+  if (!name || !position) {
+    return res.status(400).json({
+      success: false,
+      message: "Candidate name and position are required",
+    });
+  }
+
+  try {
+    // Check if candidate has any votes
+    const voteCheck = await pool.query(
+      "SELECT COUNT(*) as vote_count FROM votes WHERE candidate_id = $1",
+      [id],
+    );
+
+    if (parseInt(voteCheck.rows[0].vote_count) > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cannot edit candidate because votes have already been cast for them.",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      UPDATE candidates 
+      SET name = $1, position = $2, bio = $3
+      WHERE id = $4
+      RETURNING id, name, position, bio, photo_url
+    `,
+      [name.trim(), position.trim(), bio || null, id],
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Candidate not found" });
+    }
+
+    // Audit log
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+    `,
+      [
+        "CANDIDATE_UPDATED",
+        adminId,
+        req.user.role,
+        { candidate_id: id, name, position },
+      ],
+    );
+
+    res.json({
+      success: true,
+      message: "Candidate updated successfully",
+      candidate: result.rows[0],
+    });
+  } catch (error) {
     console.error(error);
     res
       .status(500)
-      .json({ success: false, message: "Failed to add candidate" });
+      .json({ success: false, message: "Failed to update candidate" });
+  }
+};
+
+//Delete Candidate
+const deleteCandidate = async (req, res) => {
+  const { id } = req.params;
+  const adminId = req.user.id;
+
+  try {
+    // Check if candidate has any votes
+    const voteCheck = await pool.query(
+      "SELECT COUNT(*) as vote_count FROM votes WHERE candidate_id = $1",
+      [id],
+    );
+
+    if (parseInt(voteCheck.rows[0].vote_count) > 0) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cannot delete candidate because votes have already been cast for them.",
+      });
+    }
+
+    const result = await pool.query(
+      "DELETE FROM candidates WHERE id = $1 RETURNING name",
+      [id],
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Candidate not found" });
+    }
+
+    // Audit log
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+    `,
+      [
+        "CANDIDATE_DELETED",
+        adminId,
+        req.user.role,
+        { candidate_id: id, name: result.rows[0].name },
+      ],
+    );
+
+    res.json({
+      success: true,
+      message: "Candidate deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to delete candidate" });
   }
 };
 
@@ -328,4 +467,6 @@ module.exports = {
   addCandidate,
   updateVoter,
   deleteVoter,
+  updateCandidate,
+  deleteCandidate,
 };
