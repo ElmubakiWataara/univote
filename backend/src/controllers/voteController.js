@@ -31,21 +31,7 @@ const castVote = async (req, res) => {
       });
     }
 
-    // 2. Check if voter has already voted
-    const voterCheck = await client.query(
-      "SELECT has_voted FROM voters WHERE id = $1",
-      [voterId],
-    );
-
-    if (voterCheck.rows[0]?.has_voted) {
-      await client.query("ROLLBACK");
-      return res.status(400).json({
-        success: false,
-        message: "You have already cast your vote",
-      });
-    }
-
-    // 3. Check if candidate exists
+    // 2. Check if candidate exists
     const candidateCheck = await client.query(
       "SELECT id FROM candidates WHERE id = $1",
       [candidate_id],
@@ -59,6 +45,20 @@ const castVote = async (req, res) => {
       });
     }
 
+    // 3. Prevent duplicate vote for the same candidate by the same voter
+    const duplicateCheck = await client.query(
+      "SELECT id FROM votes WHERE voter_id = $1 AND candidate_id = $2",
+      [voterId, candidate_id],
+    );
+
+    if (duplicateCheck.rows.length > 0) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        success: false,
+        message: "You have already voted for this candidate",
+      });
+    }
+
     // 4. Record the vote
     await client.query(
       `
@@ -68,32 +68,7 @@ const castVote = async (req, res) => {
       [voterId, candidate_id, ipAddress],
     );
 
-    // 5. Mark voter as voted
-    await client.query("UPDATE voters SET has_voted = TRUE WHERE id = $1", [
-      voterId,
-    ]);
-
-    // 6. Mark the token as used (Fixed version)
-    await client.query(
-      `
-      UPDATE tokens 
-      SET used = TRUE 
-      WHERE voter_id = $1 
-        AND used = FALSE 
-        AND expires_at > NOW()
-        AND id = (
-          SELECT id FROM tokens 
-          WHERE voter_id = $1 
-            AND used = FALSE 
-            AND expires_at > NOW()
-          ORDER BY created_at DESC 
-          LIMIT 1
-        )
-    `,
-      [voterId],
-    );
-
-    // 7. Log the vote
+    // 5. Log the vote
     await client.query(
       `
       INSERT INTO audit_logs (action, actor_id, actor_role, details)
@@ -111,8 +86,7 @@ const castVote = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Vote cast successfully. Thank you for voting!",
-      confirmation: `VOTE-${Date.now().toString().slice(-6)}`,
+      message: "Vote recorded successfully",
     });
   } catch (error) {
     await client.query("ROLLBACK");
@@ -126,7 +100,7 @@ const castVote = async (req, res) => {
   }
 };
 
-// Get candidates (unchanged)
+// Get candidates (unchanged - grouped by position on frontend)
 const getCandidates = async (req, res) => {
   try {
     const result = await pool.query(`

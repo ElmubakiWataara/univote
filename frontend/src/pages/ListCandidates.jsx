@@ -151,7 +151,12 @@ const ListCandidates = () => {
                       <img
                         src={`http://localhost:3000${candidate.photo_url}`}
                         // alt={candidate.name}
-                        className="w-12 h-12 object-cover rounded-xl border"
+                        className="w-14 h-14 object-cover rounded-xl border border-gray-200 shadow-sm"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src =
+                            "https://via.placeholder.com/56x56?text=No+Photo";
+                        }}
                       />
                     ) : (
                       <div className="w-12 h-12 bg-gray-200 rounded-xl flex items-center justify-center text-gray-400">
