@@ -144,7 +144,7 @@ const AddCandidate = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bio / Manifesto (Optional)
+                Motto / Manifesto (Optional)
               </label>
               <textarea
                 value={formData.bio}

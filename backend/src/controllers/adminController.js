@@ -1,10 +1,16 @@
 // backend/src/controllers/adminController.js
 const pool = require("../config/db");
 const crypto = require("crypto");
+const {
+  toTitleCase,
+  toUpperCase,
+  isValidEmail,
+  isValidStudentId,
+} = require("../helpers/stringHelpers");
 
 const updateVoter = async (req, res) => {
   const { id } = req.params;
-  const { student_id, full_name, department, email } = req.body;
+  let { student_id, full_name, department, email } = req.body;
   const adminId = req.user.id;
 
   try {
@@ -15,6 +21,16 @@ const updateVoter = async (req, res) => {
     );
     const hasVoted = current.rows[0]?.has_voted;
 
+    // Validation
+    if (full_name) full_name = toTitleCase(full_name.trim());
+
+    if (email && !isValidEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format",
+      });
+    }
+
     let query = `
       UPDATE voters 
       SET full_name = $1, department = $2, email = $3
@@ -23,6 +39,14 @@ const updateVoter = async (req, res) => {
 
     // Only allow student_id change if voter has not voted
     if (!hasVoted && student_id) {
+      student_id = student_id.trim().toUpperCase();
+      if (!isValidStudentId(student_id)) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Student ID can only contain letters and numbers (no spaces or special characters)",
+        });
+      }
       query += `, student_id = $4`;
       params.push(student_id);
     }
@@ -93,13 +117,32 @@ const deleteVoter = async (req, res) => {
   }
 };
 const registerVoter = async (req, res) => {
-  const { student_id, full_name, department, email } = req.body;
+  let { student_id, full_name, department, email } = req.body;
   const adminId = req.user.id;
 
   if (!student_id || !full_name) {
     return res.status(400).json({
       success: false,
       message: "Student ID and full name are required",
+    });
+  }
+
+  // Validation
+  student_id = student_id.trim().toUpperCase();
+  if (!isValidStudentId(student_id)) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Student ID can only contain letters and numbers (no spaces or special characters)",
+    });
+  }
+
+  full_name = toTitleCase(full_name.trim());
+
+  if (email && !isValidEmail(email)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid email format",
     });
   }
 
@@ -111,16 +154,17 @@ const registerVoter = async (req, res) => {
       ON CONFLICT (student_id) DO NOTHING
       RETURNING id, student_id, full_name
     `,
-      [student_id.toUpperCase(), full_name, department, email],
+      [student_id, full_name, department, email],
     );
 
     if (result.rows.length === 0) {
-      return res
-        .status(409)
-        .json({ success: false, message: "Student ID already exists" });
+      return res.status(409).json({
+        success: false,
+        message: "Student ID already exists",
+      });
     }
 
-    // Log action
+    // Audit log
     await pool.query(
       `
       INSERT INTO audit_logs (action, actor_id, actor_role, details)
@@ -159,12 +203,8 @@ const getCandidates = async (req, res) => {
 
 // Add this function (or replace the existing one)
 const addCandidate = async (req, res) => {
-  const { name, position, bio } = req.body;
+  let { name, position, bio } = req.body;
   const adminId = req.user.id;
-
-  // Debug log to see what is actually being received
-  // console.log("Received data:", req.body);
-  // console.log("Received file:", req.file);
 
   if (!name || !position) {
     return res.status(400).json({
@@ -173,8 +213,12 @@ const addCandidate = async (req, res) => {
     });
   }
 
+  // Normalize inputs
+  name = toTitleCase(name.trim()); // Title Case for name
+  position = position.trim().toUpperCase(); // ALL CAPS for position
+  bio = bio ? bio.trim() : null;
+
   try {
-    // Handle photo upload (if using multer or similar)
     const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     const result = await pool.query(
@@ -183,7 +227,7 @@ const addCandidate = async (req, res) => {
       VALUES ($1, $2, $3, $4)
       RETURNING id, name, position, bio, photo_url
     `,
-      [name.trim(), position.trim(), bio || null, photoUrl],
+      [name, position, bio, photoUrl],
     );
 
     // Audit log
@@ -212,7 +256,7 @@ const addCandidate = async (req, res) => {
 //Update candidate
 const updateCandidate = async (req, res) => {
   const { id } = req.params;
-  const { name, position, bio } = req.body;
+  let { name, position, bio } = req.body;
   const adminId = req.user.id;
 
   if (!name || !position) {
@@ -222,21 +266,26 @@ const updateCandidate = async (req, res) => {
     });
   }
 
+  // Check if candidate has votes
+  const voteCheck = await pool.query(
+    "SELECT COUNT(*) as vote_count FROM votes WHERE candidate_id = $1",
+    [id],
+  );
+
+  if (parseInt(voteCheck.rows[0].vote_count) > 0) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Cannot edit candidate because votes have already been cast for them.",
+    });
+  }
+
+  // Normalize inputs
+  name = toTitleCase(name.trim()); // Title Case for name
+  position = position.trim().toUpperCase(); // ALL CAPS for position
+  bio = bio ? bio.trim() : null;
+
   try {
-    // Check if candidate has any votes
-    const voteCheck = await pool.query(
-      "SELECT COUNT(*) as vote_count FROM votes WHERE candidate_id = $1",
-      [id],
-    );
-
-    if (parseInt(voteCheck.rows[0].vote_count) > 0) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Cannot edit candidate because votes have already been cast for them.",
-      });
-    }
-
     const result = await pool.query(
       `
       UPDATE candidates 
@@ -244,7 +293,7 @@ const updateCandidate = async (req, res) => {
       WHERE id = $4
       RETURNING id, name, position, bio, photo_url
     `,
-      [name.trim(), position.trim(), bio || null, id],
+      [name, position, bio, id],
     );
 
     if (result.rows.length === 0) {
