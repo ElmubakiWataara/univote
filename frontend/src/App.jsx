@@ -17,6 +17,7 @@ import ListCandidates from "./pages/ListCandidates";
 import Settings from "./pages/Settings";
 import VoterTokenInput from "./pages/VoterTokenInput";
 import VotingPage from "./pages/VotingPage";
+import ResultsPage from "./pages/ResultsPage";
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requiredRole }) => {
@@ -100,6 +101,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <ListCandidates />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/results"
+            element={
+              <ProtectedRoute>
+                <ResultsPage />
               </ProtectedRoute>
             }
           />

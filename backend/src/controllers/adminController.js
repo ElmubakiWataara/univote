@@ -459,6 +459,50 @@ const getAllVoters = async (req, res) => {
   }
 };
 
+const getResults = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        c.position,
+        c.name as candidate_name,
+        c.photo_url,
+        COUNT(v.id) as votes,
+        ROUND(COUNT(v.id) * 100.0 / NULLIF((SELECT COUNT(*) FROM votes), 0), 2) as percentage
+      FROM candidates c
+      LEFT JOIN votes v ON c.id = v.candidate_id
+      GROUP BY c.position, c.id, c.name, c.photo_url
+      ORDER BY c.position, votes DESC
+    `);
+
+    // Group by position
+    const grouped = result.rows.reduce((acc, row) => {
+      if (!acc[row.position]) {
+        acc[row.position] = [];
+      }
+      acc[row.position].push({
+        name: row.candidate_name,
+        photo_url: row.photo_url,
+        votes: parseInt(row.votes),
+        percentage: parseFloat(row.percentage) || 0,
+      });
+      return acc;
+    }, {});
+
+    const totalVotes = await pool.query("SELECT COUNT(*) as total FROM votes");
+
+    res.json({
+      success: true,
+      total_votes: parseInt(totalVotes.rows[0].total),
+      results: grouped,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to fetch results" });
+  }
+};
+
 module.exports = {
   registerVoter,
   generateVoterToken,
@@ -469,4 +513,5 @@ module.exports = {
   deleteVoter,
   updateCandidate,
   deleteCandidate,
+  getResults,
 };

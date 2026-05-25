@@ -14,6 +14,7 @@ const {
   deleteVoter,
   updateCandidate,
   deleteCandidate,
+  getResults,
 } = require("../controllers/adminController");
 
 // Setup multer for photo upload
@@ -42,5 +43,6 @@ router.put("/voters/:id", updateVoter);
 router.delete("/voters/:id", deleteVoter);
 router.put("/candidates/:id", updateCandidate);
 router.delete("/candidates/:id", deleteCandidate);
+router.get("/results", getResults);
 
 module.exports = router;
