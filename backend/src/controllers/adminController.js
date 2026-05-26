@@ -186,6 +186,108 @@ const registerVoter = async (req, res) => {
   }
 };
 
+//bulk upload and registration
+const bulkRegisterVoters = async (req, res) => {
+  const adminId = req.user.id;
+  const file = req.file;
+
+  if (!file) {
+    return res
+      .status(400)
+      .json({ success: false, message: "No file uploaded" });
+  }
+
+  try {
+    const csv = require("csv-parser");
+    const fs = require("fs");
+    const results = [];
+    const errors = [];
+    let successCount = 0;
+
+    fs.createReadStream(file.path)
+      .pipe(csv())
+      .on("data", (row) => results.push(row))
+      .on("end", async () => {
+        for (const row of results) {
+          try {
+            let student_id = (row.student_id || "").trim().toUpperCase();
+            let full_name = toTitleCase((row.full_name || "").trim());
+            const department = (row.department || "").trim();
+            const email = (row.email || "").trim();
+
+            if (!student_id || !full_name) {
+              errors.push({ row, reason: "Missing student_id or full_name" });
+              continue;
+            }
+
+            if (!isValidStudentId(student_id)) {
+              errors.push({
+                row,
+                reason:
+                  "Invalid student_id format (only letters and numbers allowed)",
+              });
+              continue;
+            }
+
+            if (email && !isValidEmail(email)) {
+              errors.push({ row, reason: "Invalid email format" });
+              continue;
+            }
+
+            const dbResult = await pool.query(
+              `
+              INSERT INTO voters (student_id, full_name, department, email)
+              VALUES ($1, $2, $3, $4)
+              ON CONFLICT (student_id) DO NOTHING
+              RETURNING id, student_id, full_name
+            `,
+              [student_id, full_name, department, email],
+            );
+
+            if (dbResult.rows.length > 0) successCount++;
+            else errors.push({ row, reason: "Student ID already exists" });
+          } catch (err) {
+            errors.push({ row, reason: err.message });
+          }
+        }
+
+        // Audit log for bulk action
+        await pool.query(
+          `
+          INSERT INTO audit_logs (action, actor_id, actor_role, details)
+          VALUES ($1, $2, $3, $4)
+        `,
+          [
+            "BULK_VOTER_REGISTERED",
+            adminId,
+            req.user.role,
+            {
+              total: results.length,
+              success: successCount,
+              failed: errors.length,
+            },
+          ],
+        );
+
+        res.json({
+          success: true,
+          message: `Bulk registration completed. ${successCount} added, ${errors.length} failed.`,
+          summary: {
+            total: results.length,
+            success: successCount,
+            failed: errors.length,
+            errors,
+          },
+        });
+      });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ success: false, message: "Bulk registration failed" });
+  }
+};
+
 const getCandidates = async (req, res) => {
   try {
     const result = await pool.query(`
@@ -563,4 +665,5 @@ module.exports = {
   updateCandidate,
   deleteCandidate,
   getResults,
+  bulkRegisterVoters,
 };

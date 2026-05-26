@@ -15,6 +15,7 @@ const {
   updateCandidate,
   deleteCandidate,
   getResults,
+  bulkRegisterVoters,
 } = require("../controllers/adminController");
 
 // Setup multer for photo upload
@@ -44,5 +45,6 @@ router.delete("/voters/:id", deleteVoter);
 router.put("/candidates/:id", updateCandidate);
 router.delete("/candidates/:id", deleteCandidate);
 router.get("/results", getResults);
+router.post("/voters/bulk", upload.single("file"), bulkRegisterVoters);
 
 module.exports = router;
