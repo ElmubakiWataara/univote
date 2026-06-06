@@ -11,12 +11,14 @@ const AdminLayout = ({ children }) => {
 
   const isSuperAdmin = user?.role === "superadmin";
 
+  const dashboardPath = isSuperAdmin ? "/admin/super" : "/admin/dashboard";
+
   const navItems = [
     {
       id: "dashboard",
       label: "Dashboard",
       icon: "",
-      path: isSuperAdmin ? "/admin/super" : "/admin/dashboard",
+      path: dashboardPath,
     },
     {
       id: "voters",

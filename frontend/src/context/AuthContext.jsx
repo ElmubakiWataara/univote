@@ -8,6 +8,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Restore user from token on refresh
   useEffect(() => {
@@ -20,8 +21,12 @@ export const AuthProvider = ({ children }) => {
           role: payload.role,
           voterId: payload.voterId,
         });
-      } catch (e) {}
+      } catch (e) {
+        console.error("Failed to decode token");
+        localStorage.removeItem("token");
+      }
     }
+    setLoading(false);
   }, [token]);
 
   const login = (newToken, userData) => {
@@ -37,7 +42,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider value={{ token, user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

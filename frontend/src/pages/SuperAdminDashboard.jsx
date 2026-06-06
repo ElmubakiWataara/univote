@@ -14,41 +14,67 @@ const SuperAdminDashboard = () => {
     electionStatus: "Closed",
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [recentLogs, setRecentLogs] = useState([]);
 
   const { user, token: authToken } = useAuth();
   const navigate = useNavigate();
 
   const fetchSuperAdminData = async () => {
+    setLoading(true);
+    setError("");
+
     try {
-      const [votersRes, resultsRes, candidatesRes, logsRes] = await Promise.all(
-        [
-          axios.get("http://localhost:3000/api/admin/voters", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }),
-          axios.get("http://localhost:3000/api/admin/results", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }),
-          axios.get("http://localhost:3000/api/admin/candidates", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }),
-          axios.get("http://localhost:3000/api/super/audit-logs?limit=5", {
-            headers: { Authorization: `Bearer ${authToken}` },
-          }),
-        ],
-      );
+      const [votersRes, resultsRes, candidatesRes] = await Promise.allSettled([
+        axios.get("http://localhost:3000/api/admin/voters", {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }),
+        axios.get("http://localhost:3000/api/admin/results", {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }),
+        axios.get("http://localhost:3000/api/admin/candidates", {
+          headers: { Authorization: `Bearer ${authToken}` },
+        }),
+      ]);
 
       setStats({
-        totalVoters: votersRes.data.voters?.length || 0,
-        votesCast: resultsRes.data.total_votes || 0,
-        candidates: candidatesRes.data.candidates?.length || 0,
-        totalAdmins: 3, // You can create a real endpoint later
-        electionStatus: resultsRes.data.is_active ? "Active" : "Closed",
+        totalVoters:
+          votersRes.status === "fulfilled"
+            ? votersRes.value.data.voters?.length || 0
+            : 0,
+        votesCast:
+          resultsRes.status === "fulfilled"
+            ? resultsRes.value.data.total_votes || 0
+            : 0,
+        candidates:
+          candidatesRes.status === "fulfilled"
+            ? candidatesRes.value.data.candidates?.length || 0
+            : 0,
+        totalAdmins: 3, // Temporary placeholder
+        electionStatus:
+          resultsRes.status === "fulfilled" && resultsRes.value.data.is_active
+            ? "Active"
+            : "Closed",
       });
 
-      setRecentLogs(logsRes.data.logs || []);
+      // Optional: Try to load logs (won't break dashboard if fails)
+      try {
+        const logsRes = await axios.get(
+          "http://localhost:3000/api/super/audit-logs?limit=5",
+          {
+            headers: { Authorization: `Bearer ${authToken}` },
+          },
+        );
+        setRecentLogs(logsRes.data.logs || []);
+      } catch (logErr) {
+        console.warn("Could not load audit logs:", logErr);
+        setRecentLogs([]);
+      }
     } catch (err) {
       console.error("Super Admin Dashboard error:", err);
+      setError(
+        "Some data could not be loaded. Please check if you are logged in as Super Admin.",
+      );
     } finally {
       setLoading(false);
     }
@@ -81,6 +107,12 @@ const SuperAdminDashboard = () => {
             </span>
           </div>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl">
+            {error}
+          </div>
+        )}
 
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -117,8 +149,8 @@ const SuperAdminDashboard = () => {
           </div>
         </div>
 
+        {/* Quick Actions & Logs */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Quick Actions */}
           <div className="lg:col-span-7 bg-white rounded-3xl shadow p-8">
             <h3 className="font-semibold text-xl mb-6">Quick Actions</h3>
             <div className="grid grid-cols-2 gap-6">
@@ -158,18 +190,8 @@ const SuperAdminDashboard = () => {
             </div>
           </div>
 
-          {/* Recent Audit Logs */}
           <div className="lg:col-span-5 bg-white rounded-3xl shadow p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-semibold text-xl">Recent Activity</h3>
-              <button
-                onClick={() => navigate("/admin/settings")}
-                className="text-indigo-600 text-sm hover:underline"
-              >
-                View All Logs →
-              </button>
-            </div>
-
+            <h3 className="font-semibold text-xl mb-6">Recent Activity</h3>
             <div className="space-y-4 text-sm">
               {recentLogs.length > 0 ? (
                 recentLogs.map((log, i) => (
@@ -190,7 +212,7 @@ const SuperAdminDashboard = () => {
                 ))
               ) : (
                 <p className="text-gray-500 py-8 text-center">
-                  No recent activity
+                  No recent activity yet
                 </p>
               )}
             </div>

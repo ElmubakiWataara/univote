@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
-import SuperAdminDashboard from "./pages/SuperAdminDashboard"; // ← New
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import RegisterVoter from "./pages/RegisterVoter";
 import GenerateToken from "./pages/GenerateToken";
 import ListVoters from "./pages/ListVoters";
@@ -20,25 +20,44 @@ import VoterTokenInput from "./pages/VoterTokenInput";
 import VotingPage from "./pages/VotingPage";
 import ResultsPage from "./pages/ResultsPage";
 
-// Protected Route with Role Handling
+// Loading Spinner Component
+const LoadingScreen = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="text-center">
+      <div className="animate-spin w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full mx-auto"></div>
+      <p className="mt-4 text-gray-600">Restoring session...</p>
+    </div>
+  </div>
+);
+
+// Protected Route
 const ProtectedRoute = ({ children, requiredRole }) => {
-  const { user, token } = useAuth();
+  const { user, token, loading } = useAuth();
+
+  if (loading) return <LoadingScreen />;
 
   if (!token) {
     return <Navigate to="/admin/login" replace />;
   }
 
-  // Super Admin can access everything
-  if (user?.role === "superadmin") {
-    return children;
-  }
-
-  // Regular Admin trying to access Super Admin only route
   if (requiredRole === "superadmin" && user?.role !== "superadmin") {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
   return children;
+};
+
+// Smart Default Redirect
+const DashboardRedirect = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) return <LoadingScreen />;
+
+  return user?.role === "superadmin" ? (
+    <Navigate to="/admin/super" replace />
+  ) : (
+    <Navigate to="/admin/dashboard" replace />
+  );
 };
 
 function App() {
@@ -53,7 +72,10 @@ function App() {
           {/* Admin Login */}
           <Route path="/admin/login" element={<AdminLogin />} />
 
-          {/* Regular Admin Routes */}
+          {/* Default Dashboard (handles /admin and refresh) */}
+          <Route path="/admin" element={<DashboardRedirect />} />
+
+          {/* Regular Admin Dashboard */}
           <Route
             path="/admin/dashboard"
             element={
@@ -73,7 +95,7 @@ function App() {
             }
           />
 
-          {/* Shared Admin Routes (accessible by both Admin & Super Admin) */}
+          {/* Shared Routes */}
           <Route
             path="/admin/register-voter"
             element={
