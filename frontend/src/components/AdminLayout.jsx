@@ -9,14 +9,14 @@ const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isSuperAdmin = user?.role === "admin";
+  const isSuperAdmin = user?.role === "superadmin";
 
   const navItems = [
     {
       id: "dashboard",
       label: "Dashboard",
       icon: "",
-      path: "/admin/dashboard",
+      path: isSuperAdmin ? "/admin/super" : "/admin/dashboard",
     },
     {
       id: "voters",

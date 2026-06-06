@@ -21,18 +21,15 @@ const AdminLogin = () => {
     try {
       const res = await axios.post(
         "http://localhost:3000/api/auth/admin-login",
-        {
-          username,
-          password,
-        },
+        { username, password },
       );
 
       if (res.data.success) {
         login(res.data.token, res.data.user);
 
-        // Role-based redirection
+        // Correct Role-based Redirection
         if (res.data.user.role === "superadmin") {
-          navigate("/admin/super");
+          navigate("/admin/super"); // ← Matches your App.jsx route
         } else {
           navigate("/admin/dashboard");
         }
@@ -61,8 +58,8 @@ const AdminLogin = () => {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-lg"
-              placeholder="superadmin or admin"
+              className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 text-lg"
+              placeholder="Enter username"
               required
             />
           </div>
@@ -75,27 +72,29 @@ const AdminLogin = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-600 text-lg"
+              className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 text-lg"
               required
             />
           </div>
 
           {error && (
-            <div className="text-red-600 text-center font-medium">{error}</div>
+            <div className="text-red-600 text-center font-medium bg-red-50 p-3 rounded-2xl">
+              {error}
+            </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg rounded-2xl transition disabled:opacity-70"
+            className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-lg rounded-2xl transition disabled:opacity-70"
           >
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
         <div className="text-center mt-8">
-          <a href="/" className="text-blue-600 hover:underline">
-            Back to Student Voting
+          <a href="/" className="text-indigo-600 hover:underline">
+            ← Back to Student Voting
           </a>
         </div>
       </div>

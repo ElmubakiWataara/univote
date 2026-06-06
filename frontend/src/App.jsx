@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard"; // ← New
 import RegisterVoter from "./pages/RegisterVoter";
 import GenerateToken from "./pages/GenerateToken";
 import ListVoters from "./pages/ListVoters";
@@ -19,7 +20,7 @@ import VoterTokenInput from "./pages/VoterTokenInput";
 import VotingPage from "./pages/VotingPage";
 import ResultsPage from "./pages/ResultsPage";
 
-// Protected Route Component
+// Protected Route with Role Handling
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { user, token } = useAuth();
 
@@ -27,11 +28,13 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to="/admin/login" replace />;
   }
 
-  if (
-    requiredRole &&
-    user?.role !== requiredRole &&
-    user?.role !== "superadmin"
-  ) {
+  // Super Admin can access everything
+  if (user?.role === "superadmin") {
+    return children;
+  }
+
+  // Regular Admin trying to access Super Admin only route
+  if (requiredRole === "superadmin" && user?.role !== "superadmin") {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
@@ -43,14 +46,14 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Routes */}
+          {/* Public Voter Routes */}
           <Route path="/" element={<VoterTokenInput />} />
           <Route path="/vote" element={<VotingPage />} />
 
-          {/* Admin Routes */}
+          {/* Admin Login */}
           <Route path="/admin/login" element={<AdminLogin />} />
 
-          {/* Protected Admin Routes */}
+          {/* Regular Admin Routes */}
           <Route
             path="/admin/dashboard"
             element={
@@ -60,6 +63,17 @@ function App() {
             }
           />
 
+          {/* Super Admin Dashboard */}
+          <Route
+            path="/admin/super"
+            element={
+              <ProtectedRoute requiredRole="superadmin">
+                <SuperAdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Shared Admin Routes (accessible by both Admin & Super Admin) */}
           <Route
             path="/admin/register-voter"
             element={
@@ -68,7 +82,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/admin/generate-token"
             element={
@@ -77,7 +90,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/admin/list-voters"
             element={
@@ -86,7 +98,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/admin/add-candidate"
             element={
@@ -95,7 +106,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/admin/list-candidates"
             element={
@@ -104,7 +114,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/admin/results"
             element={
@@ -113,7 +122,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/admin/settings"
             element={
