@@ -14,12 +14,14 @@ const SuperAdminDashboard = () => {
     electionStatus: "Closed",
   });
   const [loading, setLoading] = useState(true);
+  const [logsLoading, setLogsLoading] = useState(true);
   const [error, setError] = useState("");
   const [recentLogs, setRecentLogs] = useState([]);
 
   const { user, token: authToken } = useAuth();
   const navigate = useNavigate();
 
+  // Fetch all stats (used on initial load)
   const fetchSuperAdminData = async () => {
     setLoading(true);
     setError("");
@@ -50,38 +52,50 @@ const SuperAdminDashboard = () => {
           candidatesRes.status === "fulfilled"
             ? candidatesRes.value.data.candidates?.length || 0
             : 0,
-        totalAdmins: 3, // Temporary placeholder
+        totalAdmins: 3,
         electionStatus:
           resultsRes.status === "fulfilled" && resultsRes.value.data.is_active
             ? "Active"
             : "Closed",
       });
-
-      // Optional: Try to load logs (won't break dashboard if fails)
-      try {
-        const logsRes = await axios.get(
-          "http://localhost:3000/api/super/audit-logs?limit=5",
-          {
-            headers: { Authorization: `Bearer ${authToken}` },
-          },
-        );
-        setRecentLogs(logsRes.data.logs || []);
-      } catch (logErr) {
-        console.warn("Could not load audit logs:", logErr);
-        setRecentLogs([]);
-      }
     } catch (err) {
-      console.error("Super Admin Dashboard error:", err);
-      setError(
-        "Some data could not be loaded. Please check if you are logged in as Super Admin.",
-      );
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch ONLY logs (for refresh button + polling)
+  const fetchLogs = async () => {
+    setLogsLoading(true);
+    try {
+      const logsRes = await axios.get(
+        "http://localhost:3000/api/super/audit-logs?limit=8",
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+        },
+      );
+      setRecentLogs(logsRes.data.logs || []);
+    } catch (err) {
+      console.warn("Could not load logs:", err);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  // Initial load
   useEffect(() => {
     fetchSuperAdminData();
+    fetchLogs();
+  }, []);
+
+  // Auto-refresh logs every 7 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchLogs();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -190,28 +204,77 @@ const SuperAdminDashboard = () => {
             </div>
           </div>
 
+          {/* Recent Audit Logs */}
           <div className="lg:col-span-5 bg-white rounded-3xl shadow p-8">
-            <h3 className="font-semibold text-xl mb-6">Recent Activity</h3>
-            <div className="space-y-4 text-sm">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-semibold text-xl">Recent Activity</h3>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={fetchLogs}
+                  disabled={logsLoading}
+                  className="
+                    flex items-center gap-2
+                    px-3 py-2
+                    border border-slate-300
+                    bg-white
+                    text-slate-700
+                    rounded-lg
+                    hover:bg-slate-50
+                    hover:border-indigo-400
+                    transition
+                    disabled:opacity-50
+                  "
+                >
+                  <span className={logsLoading ? "animate-spin" : ""}>↻</span>
+                  {logsLoading ? "Refreshing..." : "Refresh"}
+                </button>
+                <button
+                  onClick={() => navigate("/admin/audit-logs")}
+                  className="text-indigo-600 text-sm hover:underline"
+                >
+                  View All
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-sm max-h-96 overflow-y-auto">
               {recentLogs.length > 0 ? (
-                recentLogs.map((log, i) => (
-                  <div
-                    key={i}
-                    className="flex justify-between py-3 border-b last:border-0"
-                  >
-                    <div>
-                      <span className="font-medium">{log.action}</span>
-                      <p className="text-gray-500 text-xs mt-1">
-                        {log.details}
-                      </p>
+                recentLogs.map((log, i) => {
+                  let detailsText = "";
+                  try {
+                    if (typeof log.details === "string") {
+                      const parsed = JSON.parse(log.details);
+                      detailsText = parsed
+                        ? JSON.stringify(parsed, null, 2)
+                        : log.details;
+                    } else {
+                      detailsText = JSON.stringify(log.details);
+                    }
+                  } catch (e) {
+                    detailsText = log.details || "—";
+                  }
+
+                  return (
+                    <div
+                      key={i}
+                      className="flex justify-between py-3 border-b last:border-0"
+                    >
+                      <div className="flex-1 pr-4">
+                        <span className="font-medium text-gray-800">
+                          {log.action}
+                        </span>
+                        <p className="text-gray-500 text-xs mt-1 break-words">
+                          {detailsText}
+                        </p>
+                      </div>
+                      <div className="text-right text-gray-500 text-xs whitespace-nowrap">
+                        {new Date(log.created_at).toLocaleTimeString()}
+                      </div>
                     </div>
-                    <div className="text-right text-gray-500 text-xs">
-                      {new Date(log.created_at).toLocaleTimeString()}
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
-                <p className="text-gray-500 py-8 text-center">
+                <p className="text-gray-500 py-12 text-center">
                   No recent activity yet
                 </p>
               )}

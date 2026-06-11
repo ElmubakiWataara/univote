@@ -58,21 +58,28 @@ const toggleElection = async (req, res) => {
 
 const getAuditLogs = async (req, res) => {
   try {
-    const result = await pool.query(`
+    const limit = parseInt(req.query.limit) || 10;
+
+    const result = await pool.query(
+      `
       SELECT id, action, actor_id, actor_role, details, created_at 
       FROM audit_logs 
       ORDER BY created_at DESC 
-      LIMIT 100
-    `);
+      LIMIT $1
+    `,
+      [limit],
+    );
 
     res.json({
       success: true,
       logs: result.rows,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to fetch audit logs" });
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch audit logs",
+    });
   }
 };
 

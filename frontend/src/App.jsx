@@ -19,6 +19,7 @@ import Settings from "./pages/Settings";
 import VoterTokenInput from "./pages/VoterTokenInput";
 import VotingPage from "./pages/VotingPage";
 import ResultsPage from "./pages/ResultsPage";
+import AuditLogs from "./pages/AuditLogs";
 
 // Loading Spinner Component
 const LoadingScreen = () => (
@@ -141,6 +142,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ResultsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/audit-logs"
+            element={
+              <ProtectedRoute>
+                <AuditLogs />
               </ProtectedRoute>
             }
           />

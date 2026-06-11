@@ -55,7 +55,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/vote", voteRoutes);
-app.use("/api/superadmin", superAdminRoutes);
+app.use("/api/super", superAdminRoutes);
 
 // Global error handler (must be last)
 app.use(errorHandler);

@@ -70,8 +70,15 @@ const AdminLayout = ({ children }) => {
           label: "Results",
           path: "/admin/results",
         },
+        ,
+        {
+          id: "audit-logs",
+          label: "Audit Logs",
+          path: "/admin/audit-logs",
+        },
       ],
     },
+
     {
       id: "settings",
       label: "Settings",
