@@ -27,7 +27,6 @@ const ListCandidates = () => {
           headers: { Authorization: `Bearer ${authToken}` },
         },
       );
-      // Sort by position on frontend as backup
       const sorted = (res.data.candidates || []).sort((a, b) =>
         a.position.localeCompare(b.position),
       );
@@ -42,6 +41,28 @@ const ListCandidates = () => {
   useEffect(() => {
     fetchCandidates();
   }, []);
+
+  // Reusable Image Component
+  const CandidateImage = ({ photo_url, name }) => (
+    <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200">
+      {photo_url ? (
+        <img
+          src={photo_url}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            console.error(`Failed image: ${name}`, photo_url);
+            e.target.onerror = null;
+            e.target.src = "https://via.placeholder.com/56x56?text=No+Photo";
+          }}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-3xl text-gray-400">
+          📸
+        </div>
+      )}
+    </div>
+  );
 
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Delete candidate "${name}"?`)) return;
@@ -145,24 +166,11 @@ const ListCandidates = () => {
                     {index + 1}
                   </td>
 
-                  {/* Image Column */}
                   <td className="py-5 px-8">
-                    {candidate.photo_url ? (
-                      <img
-                        src={`http://localhost:3000${candidate.photo_url}`}
-                        // alt={candidate.name}
-                        className="w-14 h-14 object-cover rounded-xl border border-gray-200 shadow-sm"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src =
-                            "https://via.placeholder.com/56x56?text=No+Photo";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-gray-200 rounded-xl flex items-center justify-center text-gray-400">
-                        📸
-                      </div>
-                    )}
+                    <CandidateImage
+                      photo_url={candidate.photo_url}
+                      name={candidate.name}
+                    />
                   </td>
 
                   <td className="py-5 px-8 font-medium">{candidate.name}</td>

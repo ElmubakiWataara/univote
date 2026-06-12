@@ -19,6 +19,7 @@ const PORT = process.env.PORT || 3000;
 
 // Security & Middleware
 app.use(helmet());
+
 app.use(
   cors({
     origin: "*", // For local LAN - you can restrict later
@@ -28,7 +29,6 @@ app.use(
 );
 
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
 
 // Rate limiting (basic protection)
 const limiter = rateLimit({
@@ -39,8 +39,15 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Serve built React frontend (from Phase 1)
-app.use(express.static(path.join(__dirname, "../../frontend/dist")));
-
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "../uploads"), {
+    setHeaders: (res) => {
+      res.set("Cache-Control", "public, max-age=31536000");
+    },
+  }),
+);
+console.log("Serving uploads from:", path.join(__dirname, "../uploads"));
 // Health check endpoint
 app.get("/api/health", (req, res) => {
   res.json({
@@ -61,9 +68,9 @@ app.use("/api/super", superAdminRoutes);
 app.use(errorHandler);
 
 // Catch-all route to serve React frontend for any unknown route
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"));
+// });
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Voting Server running on http://0.0.0.0:${PORT}`);

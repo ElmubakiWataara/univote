@@ -6,13 +6,14 @@ import { useAuth } from "../context/AuthContext";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 const ResultsPage = () => {
   const [results, setResults] = useState({});
   const [totalVotes, setTotalVotes] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedCandidate, setSelectedCandidate] = useState(null); // For modal
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
 
   const { token: authToken } = useAuth();
 
@@ -36,7 +37,6 @@ const ResultsPage = () => {
     fetchResults();
   }, []);
 
-  // Get color based on rank
   const getRankColor = (rank, totalCandidates) => {
     if (rank === 1) return "bg-emerald-500";
     if (rank === totalCandidates) return "bg-red-500";
@@ -53,13 +53,90 @@ const ResultsPage = () => {
 
   const closeModal = () => setSelectedCandidate(null);
 
-  // Export functions (unchanged)
+  //exports to excel
   const exportToExcel = () => {
-    /* ... your existing code ... */
+    const data = [];
+    Object.entries(results).forEach(([position, candidates]) => {
+      candidates.forEach((c) => {
+        data.push({
+          Position: position,
+          Candidate: c.name,
+          Votes: c.votes,
+          Percentage: `${c.percentage}%`,
+        });
+      });
+    });
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Election Results");
+    XLSX.writeFile(
+      wb,
+      `Election_Results_${new Date().toISOString().slice(0, 10)}.xlsx`,
+    );
   };
+
+  // export to pdf
   const exportToPDF = () => {
-    /* ... your existing code ... */
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("Election Results", 14, 20);
+    doc.setFontSize(12);
+    doc.text(`Total Votes: ${totalVotes}`, 14, 30);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 38);
+
+    let y = 50;
+
+    Object.entries(results).forEach(([position, candidates]) => {
+      doc.setFontSize(14);
+      doc.text(position, 14, y);
+      y += 10;
+
+      const tableData = candidates.map((c) => [
+        c.name,
+        c.votes,
+        `${c.percentage}%`,
+      ]);
+
+      // Correct way to call autoTable
+      autoTable(doc, {
+        startY: y,
+        head: [["Candidate", "Votes", "Percentage"]],
+        body: tableData,
+        theme: "grid",
+        styles: { fontSize: 11 },
+        headStyles: { fillColor: [79, 70, 229] },
+      });
+
+      y = doc.lastAutoTable.finalY + 15;
+    });
+
+    doc.save(`Election_Results_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
+
+  // Reusable Image Component
+  const CandidateImage = ({ photo_url, name, size = "16" }) => (
+    <div
+      className={`w-${size} h-${size} bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0`}
+    >
+      {photo_url ? (
+        <img
+          src={photo_url}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            console.error(`Failed image: ${name}`, photo_url);
+            e.target.onerror = null;
+            e.target.src = "https://via.placeholder.com/64x64?text=No+Photo";
+          }}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-4xl text-gray-400">
+          👤
+        </div>
+      )}
+    </div>
+  );
 
   if (loading) {
     return (
@@ -142,24 +219,10 @@ const ResultsPage = () => {
                         }
                         className="flex items-center gap-6 p-4 rounded-2xl hover:bg-gray-50 cursor-pointer transition group"
                       >
-                        <div className="w-16 h-16 bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0">
-                          {candidate.photo_url ? (
-                            <img
-                              src={`http://localhost:3000${candidate.photo_url}`}
-                              alt={candidate.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition"
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src =
-                                  "https://via.placeholder.com/64x64?text=No+Photo";
-                              }}
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-4xl text-gray-400">
-                              👤
-                            </div>
-                          )}
-                        </div>
+                        <CandidateImage
+                          photo_url={candidate.photo_url}
+                          name={candidate.name}
+                        />
 
                         <div className="flex-1">
                           <div className="flex justify-between mb-2">
@@ -168,7 +231,7 @@ const ResultsPage = () => {
                                 {candidate.name}
                               </h3>
                               <span className="text-sm text-gray-500">
-                                {/* Rank #{rank} */}
+                                Rank #{rank}
                               </span>
                             </div>
                             <div className="text-right">
@@ -210,30 +273,22 @@ const ResultsPage = () => {
             <div className="p-8">
               <div className="flex justify-end mb-4">
                 <button
-                  onClick={() => setSelectedCandidate(null)}
-                  className="text-3xl text-gray-400 hover:text-gray-700"
+                  onClick={closeModal}
+                  className="text-3xl text-gray-400 hover:text-gray-600"
                 >
                   ✕
                 </button>
               </div>
 
               <div className="flex flex-col md:flex-row gap-8">
-                {/* Photo */}
                 <div className="flex-shrink-0">
-                  {selectedCandidate.photo_url ? (
-                    <img
-                      src={`http://localhost:3000${selectedCandidate.photo_url}`}
-                      alt={selectedCandidate.name}
-                      className="w-64 h-64 object-cover rounded-3xl shadow"
-                    />
-                  ) : (
-                    <div className="w-64 h-64 bg-gray-100 rounded-3xl flex items-center justify-center text-8xl">
-                      👤
-                    </div>
-                  )}
+                  <CandidateImage
+                    photo_url={selectedCandidate.photo_url}
+                    name={selectedCandidate.name}
+                    size="64"
+                  />
                 </div>
 
-                {/* Details */}
                 <div className="flex-1">
                   <h2 className="text-4xl font-bold text-gray-900">
                     {selectedCandidate.name}
