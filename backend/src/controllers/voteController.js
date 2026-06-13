@@ -1,84 +1,238 @@
 // backend/src/controllers/voteController.js
 const pool = require("../config/db");
 
-const castVote = async (req, res) => {
-  const { candidate_id } = req.body;
+// const castVote = async (req, res) => {
+//   const { candidate_id } = req.body;
+//   const voterId = req.user.voterId;
+//   const studentId = req.user.studentId;
+//   const ipAddress = req.ip || req.connection.remoteAddress;
+
+//   if (!candidate_id) {
+//     return res.status(400).json({
+//       success: false,
+//       message: "Candidate ID is required",
+//     });
+//   }
+
+//   const client = await pool.connect();
+
+//   try {
+//     await client.query("BEGIN");
+
+//     const electionResult = await client.query(
+//       "SELECT is_active FROM election_settings LIMIT 1",
+//     );
+
+//     if (!electionResult.rows[0]?.is_active) {
+//       await client.query("ROLLBACK");
+//       return res.status(400).json({
+//         success: false,
+//         message: "Election is closed",
+//       });
+//     }
+
+//     const candidateCheck = await client.query(
+//       "SELECT id, position FROM candidates WHERE id = $1",
+//       [candidate_id],
+//     );
+
+//     if (candidateCheck.rows.length === 0) {
+//       await client.query("ROLLBACK");
+//       return res.status(404).json({
+//         success: false,
+//         message: "Invalid candidate",
+//       });
+//     }
+
+//     const { position } = candidateCheck.rows[0];
+
+//     const positionVoteCheck = await client.query(
+//       `
+//       SELECT id FROM votes
+//       WHERE voter_id = $1
+//       AND candidate_id IN (
+//         SELECT id FROM candidates WHERE position = $2
+//       )
+//       `,
+//       [voterId, position],
+//     );
+
+//     if (positionVoteCheck.rows.length > 0) {
+//       await client.query("ROLLBACK");
+//       return res.status(400).json({
+//         success: false,
+//         message: `You have already voted for the position: ${position}`,
+//       });
+//     }
+
+//     await client.query(
+//       `
+//       INSERT INTO votes (voter_id, candidate_id, ip_address)
+//       VALUES ($1, $2, $3)
+//     `,
+//       [voterId, candidate_id, ipAddress],
+//     );
+
+//     await client.query(
+//       "UPDATE voters SET has_voted = TRUE WHERE id = $1 AND has_voted = FALSE",
+//       [voterId],
+//     );
+
+//     await client.query(
+//       `
+//       INSERT INTO audit_logs (action, actor_id, actor_role, details)
+//       VALUES ($1, $2, $3, $4)
+//     `,
+//       [
+//         "VOTE_CAST",
+//         voterId,
+//         "voter",
+//         JSON.stringify({ position, candidate_id, ip_address: ipAddress }),
+//       ],
+//     );
+
+//     await client.query("COMMIT");
+
+//     res.json({
+//       success: true,
+//       message: "Vote recorded successfully",
+//     });
+//   } catch (error) {
+//     await client.query("ROLLBACK");
+//     console.error("Vote casting error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to record your vote. Please try again.",
+//     });
+//   } finally {
+//     client.release();
+//   }
+// };
+
+// ==================== NEW: Submit Complete Ballot ====================
+const submitBallot = async (req, res) => {
+  const { votes } = req.body;
   const voterId = req.user.voterId;
   const ipAddress = req.ip || req.connection.remoteAddress;
-
-  if (!candidate_id) {
-    return res.status(400).json({
-      success: false,
-      message: "Candidate ID is required",
-    });
-  }
 
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
 
-    // 1. Check if election is active
+    // Check election is active
     const electionResult = await client.query(
       "SELECT is_active FROM election_settings LIMIT 1",
     );
 
     if (!electionResult.rows[0]?.is_active) {
       await client.query("ROLLBACK");
-      return res.status(400).json({
-        success: false,
-        message: "Election is closed",
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: "Election is closed" });
     }
 
-    // 2. Check if candidate exists
-    const candidateCheck = await client.query(
-      "SELECT id FROM candidates WHERE id = $1",
-      [candidate_id],
+    // Get voter details once
+    const voterResult = await client.query(
+      "SELECT student_id, full_name FROM voters WHERE id = $1",
+      [voterId],
     );
+    const voter = voterResult.rows[0];
 
-    if (candidateCheck.rows.length === 0) {
-      await client.query("ROLLBACK");
-      return res.status(404).json({
-        success: false,
-        message: "Invalid candidate",
-      });
+    // Process each vote
+    if (votes && votes.length > 0) {
+      for (const { candidate_id } of votes) {
+        if (!candidate_id) continue;
+
+        // Get candidate details
+        const candidateResult = await client.query(
+          "SELECT name, position FROM candidates WHERE id = $1",
+          [candidate_id],
+        );
+
+        if (candidateResult.rows.length === 0) continue;
+
+        const candidate = candidateResult.rows[0];
+
+        // Check if already voted for this position
+        const existing = await client.query(
+          `
+          SELECT id FROM votes 
+          WHERE voter_id = $1 
+          AND candidate_id IN (SELECT id FROM candidates WHERE position = $2)
+          `,
+          [voterId, candidate.position],
+        );
+
+        if (existing.rows.length > 0) continue;
+
+        // INSERT with denormalized data
+        await client.query(
+          `
+          INSERT INTO votes (
+            voter_id, candidate_id, ip_address, 
+            student_id, full_name, 
+            candidate_name, candidate_position
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `,
+          [
+            voterId,
+            candidate_id,
+            ipAddress,
+            voter.student_id,
+            voter.full_name,
+            candidate.name,
+            candidate.position,
+          ],
+        );
+      }
     }
 
-    // 3. Prevent duplicate vote for the same candidate by the same voter
-    const duplicateCheck = await client.query(
-      "SELECT id FROM votes WHERE voter_id = $1 AND candidate_id = $2",
-      [voterId, candidate_id],
-    );
+    // Mark voter as has_voted (even if fully skipped)
+    await client.query("UPDATE voters SET has_voted = TRUE WHERE id = $1", [
+      voterId,
+    ]);
 
-    if (duplicateCheck.rows.length > 0) {
-      await client.query("ROLLBACK");
-      return res.status(400).json({
-        success: false,
-        message: "You have already voted for this candidate",
-      });
+    //votes details for audit log
+    const voteDetails = [];
+    if (votes && votes.length > 0) {
+      for (const { candidate_id } of votes) {
+        if (!candidate_id) continue;
+
+        const candResult = await client.query(
+          "SELECT name, position FROM candidates WHERE id = $1",
+          [candidate_id],
+        );
+
+        if (candResult.rows.length > 0) {
+          voteDetails.push({
+            candidate_id: candidate_id,
+            candidate_name: candResult.rows[0].name,
+            position: candResult.rows[0].position,
+          });
+        }
+      }
     }
 
-    // 4. Record the vote
-    await client.query(
-      `
-      INSERT INTO votes (voter_id, candidate_id, ip_address)
-      VALUES ($1, $2, $3)
-    `,
-      [voterId, candidate_id, ipAddress],
-    );
-
-    // 5. Log the vote
+    // Audit Log
     await client.query(
       `
       INSERT INTO audit_logs (action, actor_id, actor_role, details)
       VALUES ($1, $2, $3, $4)
-    `,
+      `,
       [
-        "VOTE_CAST",
+        "BALLOT_SUBMITTED",
         voterId,
         "voter",
-        JSON.stringify({ candidate_id, ip_address: ipAddress }),
+        JSON.stringify({
+          voter_id: voterId,
+          student_id: voter.student_id,
+          ip_address: ipAddress,
+          votes_cast: votes?.length || 0,
+          full_skipped: !votes || votes.length === 0,
+          votes: voteDetails,
+        }),
       ],
     );
 
@@ -86,21 +240,21 @@ const castVote = async (req, res) => {
 
     res.json({
       success: true,
-      message: "Vote recorded successfully",
+      message: "Ballot submitted successfully",
+      votes_cast: votes?.length || 0,
+      full_abstention: !votes || votes.length === 0,
     });
   } catch (error) {
     await client.query("ROLLBACK");
-    console.error("Vote casting error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to record your vote. Please try again.",
-    });
+    console.error("Ballot submission error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to submit ballot" });
   } finally {
     client.release();
   }
 };
 
-// Get candidates (unchanged - grouped by position on frontend)
 const getCandidates = async (req, res) => {
   try {
     const result = await pool.query(`
@@ -122,6 +276,7 @@ const getCandidates = async (req, res) => {
 };
 
 module.exports = {
-  castVote,
+  // castVote,
   getCandidates,
+  submitBallot, // ← Added
 };

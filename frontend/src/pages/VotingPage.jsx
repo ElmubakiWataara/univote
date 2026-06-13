@@ -5,15 +5,37 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 
 const VotingPage = () => {
-  const [positions, setPositions] = useState([]); // [{position, candidates}]
-  const [selections, setSelections] = useState({}); // {position: candidateId}
+  const [positions, setPositions] = useState([]);
+  const [selections, setSelections] = useState({});
+  const [skippedPositions, setSkippedPositions] = useState(new Set());
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
 
-  const { token, user, logout } = useAuth();
+  const { token, logout } = useAuth();
   const navigate = useNavigate();
+
+  const CandidateImage = ({ photo_url, name }) => (
+    <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200">
+      {photo_url ? (
+        <img
+          src={photo_url}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            console.error(`Failed image: ${name}`, photo_url);
+            e.target.onerror = null;
+            e.target.src = "https://via.placeholder.com/56x56?text=No+Photo";
+          }}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-3xl text-gray-400">
+          📸
+        </div>
+      )}
+    </div>
+  );
 
   useEffect(() => {
     if (!token) {
@@ -53,6 +75,23 @@ const VotingPage = () => {
       ...prev,
       [position]: candidateId,
     }));
+    setSkippedPositions((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(position);
+      return newSet;
+    });
+  };
+
+  const skipPosition = (position) => {
+    setSkippedPositions((prev) => new Set(prev).add(position));
+    setSelections((prev) => {
+      const newSelections = { ...prev };
+      delete newSelections[position];
+      return newSelections;
+    });
+    if (currentStep < positions.length - 1) {
+      setCurrentStep(currentStep + 1);
+    }
   };
 
   const goToNext = () => {
@@ -67,25 +106,58 @@ const VotingPage = () => {
     }
   };
 
+  // ==================== UPDATED SUBMISSION LOGIC ====================
   const handleSubmitAllVotes = async () => {
+    if (submitting) return;
     setSubmitting(true);
 
     try {
-      for (const [position, candidateId] of Object.entries(selections)) {
-        await axios.post(
-          "http://localhost:3000/api/vote/vote",
-          { candidate_id: candidateId },
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
+      const votedCount = Object.keys(selections).length;
+      const skippedCount = skippedPositions.size;
+      const totalPositions = positions.length;
+      const interactedCount = votedCount + skippedCount;
+
+      if (interactedCount < totalPositions) {
+        const untouched = totalPositions - interactedCount;
+        alert(`You have ${untouched} position(s) where you neither voted nor skipped. 
+Please vote or skip all positions before submitting.`);
+        setSubmitting(false);
+        return;
       }
 
-      setMessage("Thank you! All your votes have been cast successfully.");
+      // Prepare votes array for backend
+      const votesPayload = Object.entries(selections).map(
+        ([position, candidateId]) => ({
+          candidate_id: candidateId,
+        }),
+      );
+
+      // Call new submitBallot endpoint
+      const res = await axios.post(
+        "http://localhost:3000/api/vote/submit-ballot",
+        { votes: votesPayload },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      setMessage(
+        res.data.full_abstention
+          ? "You have chosen to skip all positions. Your ballot has been recorded as full abstention."
+          : `Thank you! You successfully voted in ${votedCount} position(s). ` +
+              (skippedCount > 0
+                ? `${skippedCount} position(s) were skipped.`
+                : ""),
+      );
+
       setTimeout(() => {
         logout();
         navigate("/");
-      }, 2500);
+      }, 3000);
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to submit some votes");
+      console.error(err);
+      alert(
+        err.response?.data?.message ||
+          "Failed to submit your ballot. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -114,6 +186,8 @@ const VotingPage = () => {
   const isLastStep = currentStep === positions.length - 1;
   const hasSelectedCurrent =
     currentPosition && selections[currentPosition.position];
+  const isSkipped =
+    currentPosition && skippedPositions.has(currentPosition.position);
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -142,6 +216,12 @@ const VotingPage = () => {
           <h2 className="text-3xl font-bold text-center mb-10">
             {currentPosition?.position}
           </h2>
+          <button
+            onClick={() => skipPosition(currentPosition.position)}
+            className="px-6 py-2 mb-2 text-gray-600 border border-gray-300 hover:bg-gray-100 rounded-2xl transition text-lg font-medium "
+          >
+            Skip
+          </button>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {currentPosition?.candidates.map((candidate) => (
@@ -156,11 +236,11 @@ const VotingPage = () => {
                     : "border-gray-200 hover:border-gray-300"
                 }`}
               >
-                <div className="flex gap-6">
-                  <div className="w-20 h-20 bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0">
+                <div className="flex gap-4">
+                  <div className="w-35 h-35 bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0">
                     {candidate.photo_url ? (
                       <img
-                        src={`http://localhost:3000${candidate.photo_url}`}
+                        src={candidate.photo_url}
                         alt={candidate.name}
                         className="w-full h-full object-cover"
                       />
@@ -204,27 +284,23 @@ const VotingPage = () => {
           <button
             onClick={goToPrevious}
             disabled={currentStep === 0}
-            className="px-12 py-4 border border-gray-300 rounded-2xl font-medium disabled:opacity-40 hover:bg-gray-50"
+            className="px-12 py-4 bg-red-600 text-white border border-gray-300 rounded-2xl font-medium disabled:opacity-300 hover:bg-red-700"
           >
-            ← Previous Position
+            Previous Position
           </button>
 
           {isLastStep ? (
             <button
               onClick={handleSubmitAllVotes}
-              disabled={
-                Object.keys(selections).length !== positions.length ||
-                submitting
-              }
-              className="px-12 py-4 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold rounded-2xl transition"
+              disabled={submitting}
+              className="px-12 py-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-2xl transition disabled:opacity-70"
             >
-              {submitting ? "Submitting All Votes..." : "Submit All Votes"}
+              {submitting ? "Submitting..." : "Submit Ballot"}
             </button>
           ) : (
             <button
               onClick={goToNext}
-              disabled={!hasSelectedCurrent}
-              className="px-12 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-400 text-white font-semibold rounded-2xl transition"
+              className="px-12 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl transition"
             >
               Next Position →
             </button>
