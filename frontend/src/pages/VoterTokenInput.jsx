@@ -52,7 +52,7 @@ const VoterTokenInput = () => {
               value={token}
               onChange={(e) => setToken(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg tracking-widest"
-              placeholder="Enter 64-character token"
+              placeholder="Enter 6-character token"
               required
             />
           </div>

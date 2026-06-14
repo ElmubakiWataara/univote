@@ -537,8 +537,15 @@ const generateVoterToken = async (req, res) => {
       });
     }
 
-    // 3. Generate secure random token (64 hex characters)
-    const tokenValue = crypto.randomBytes(32).toString("hex");
+    // const tokenValue = crypto.randomBytes(32).toString("hex");
+    // Generate 6-Character Token
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const randomBytes = crypto.randomBytes(6);
+    let tokenValue = "";
+
+    for (let i = 0; i < 6; i++) {
+      tokenValue += chars.charAt(randomBytes[i] % chars.length);
+    }
 
     // 4. Set 15 minutes expiry
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -567,6 +574,7 @@ const generateVoterToken = async (req, res) => {
           student_id: student_id,
           voter_name: voter.full_name,
           token_id: tokenInsert.rows[0].id,
+          token_value: tokenValue,
         },
       ],
     );

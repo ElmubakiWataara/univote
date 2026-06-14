@@ -87,7 +87,7 @@ const GenerateToken = () => {
                 ✅ Token Generated Successfully
               </p>
               <div className="mt-6 flex gap-4 items-center bg-white p-5 rounded-2xl border">
-                <code className="font-mono text-base flex-1 break-all text-gray-800">
+                <code className="font-mono  text-4xl flex-1 break-all text-gray-800">
                   {tokenData.token}
                 </code>
                 <button
