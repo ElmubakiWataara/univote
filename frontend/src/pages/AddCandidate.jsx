@@ -8,6 +8,7 @@ const AddCandidate = () => {
   const [formData, setFormData] = useState({
     name: "",
     position: "",
+    yes_or_no: "",
     bio: "",
   });
   const [photo, setPhoto] = useState(null);
@@ -38,6 +39,7 @@ const AddCandidate = () => {
       const form = new FormData();
       form.append("name", formData.name);
       form.append("position", formData.position);
+      form.append("yes_or_no", formData.yes_or_no);
       if (formData.bio) form.append("bio", formData.bio);
       if (photo) form.append("photo", photo);
 
@@ -47,13 +49,12 @@ const AddCandidate = () => {
         {
           headers: {
             Authorization: `Bearer ${authToken}`,
-            // Do NOT set Content-Type manually when using FormData
           },
         },
       );
 
       setSuccess(`Candidate "${res.data.candidate.name}" added successfully!`);
-      setFormData({ name: "", position: "", bio: "" });
+      setFormData({ name: "", position: "", yes_or_no: "", bio: "" });
       setPhoto(null);
       setPhotoPreview(null);
     } catch (err) {
@@ -139,6 +140,21 @@ const AddCandidate = () => {
                 className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
                 placeholder="President, Vice President, Secretary..."
                 required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Yes or No (Optional for Unopposed Candidates)
+              </label>
+              <input
+                type="text"
+                value={formData.yes_or_no}
+                onChange={(e) =>
+                  setFormData({ ...formData, yes_or_no: e.target.value })
+                }
+                className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                placeholder="Yes or No"
               />
             </div>
 

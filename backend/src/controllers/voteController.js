@@ -150,7 +150,7 @@ const submitBallot = async (req, res) => {
 const getCandidates = async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, name, position, bio, photo_url 
+      SELECT id, name, position, bio, photo_url, yes_or_no 
       FROM candidates 
       ORDER BY position, name
     `);

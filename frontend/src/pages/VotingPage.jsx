@@ -126,7 +126,7 @@ const VotingPage = () => {
       if (interactedCount < totalPositions) {
         const untouched = totalPositions - interactedCount;
         alert(`You have ${untouched} position(s) where you neither voted nor skipped. 
-Please vote or skip all positions before submitting.`);
+              Please vote or skip all positions before submitting.`);
         setSubmitting(false);
         return;
       }
@@ -263,11 +263,11 @@ Please vote or skip all positions before submitting.`);
                     )}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-2xl">{candidate.name}</h3>
+                    <h3 className="font-semibold text-3xl">{candidate.name}</h3>
                     <p className="text-indigo-600 mt-1">{candidate.position}</p>
-                    {candidate.bio && (
-                      <p className="text-gray-600 mt-4 text-sm line-clamp-3">
-                        {candidate.bio}
+                    {candidate.yes_or_no && (
+                      <p className="text-red-600 mt-4 text-6xl line-clamp-3, ">
+                        {candidate.yes_or_no}
                       </p>
                     )}
                   </div>

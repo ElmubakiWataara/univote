@@ -291,7 +291,7 @@ const bulkRegisterVoters = async (req, res) => {
 const getCandidates = async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT id, name, position, bio, photo_url 
+      SELECT id, name, position, bio, photo_url, yes_or_no
       FROM candidates 
       ORDER BY position, name
     `);
@@ -305,7 +305,7 @@ const getCandidates = async (req, res) => {
 
 // Add this function (or replace the existing one)
 const addCandidate = async (req, res) => {
-  let { name, position, bio } = req.body;
+  let { name, position, bio, yes_or_no } = req.body;
   const adminId = req.user.id;
 
   if (!name || !position) {
@@ -319,17 +319,18 @@ const addCandidate = async (req, res) => {
   name = toTitleCase(name.trim()); // Title Case for name
   position = position.trim().toUpperCase(); // ALL CAPS for position
   bio = bio ? bio.trim() : null;
+  yes_or_no = yes_or_no ? yes_or_no.trim().toUpperCase() : null;
 
   try {
     const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     const result = await pool.query(
       `
-      INSERT INTO candidates (name, position, bio, photo_url)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id, name, position, bio, photo_url
+      INSERT INTO candidates (name, position, bio, photo_url, yes_or_no)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id, name, position, bio, photo_url, yes_or_no 
     `,
-      [name, position, bio, photoUrl],
+      [name, position, bio, photoUrl, yes_or_no],
     );
 
     // Audit log
@@ -338,7 +339,12 @@ const addCandidate = async (req, res) => {
       INSERT INTO audit_logs (action, actor_id, actor_role, details)
       VALUES ($1, $2, $3, $4)
     `,
-      ["CANDIDATE_ADDED", adminId, req.user.role, { name, position }],
+      [
+        "CANDIDATE_ADDED",
+        adminId,
+        req.user.role,
+        { name, position, yes_or_no: yes_or_no },
+      ],
     );
 
     res.json({
@@ -358,7 +364,7 @@ const addCandidate = async (req, res) => {
 //Update candidate
 const updateCandidate = async (req, res) => {
   const { id } = req.params;
-  let { name, position, bio } = req.body;
+  let { name, position, bio, yes_or_no } = req.body; // Note: yes_or_no from frontend
   const adminId = req.user.id;
 
   if (!name || !position) {
@@ -368,7 +374,7 @@ const updateCandidate = async (req, res) => {
     });
   }
 
-  // Check if candidate has votes
+  // Check votes
   const voteCheck = await pool.query(
     "SELECT COUNT(*) as vote_count FROM votes WHERE candidate_id = $1",
     [id],
@@ -377,25 +383,28 @@ const updateCandidate = async (req, res) => {
   if (parseInt(voteCheck.rows[0].vote_count) > 0) {
     return res.status(400).json({
       success: false,
-      message:
-        "Cannot edit candidate because votes have already been cast for them.",
+      message: "Cannot edit candidate because votes have already been cast.",
     });
   }
 
-  // Normalize inputs
-  name = toTitleCase(name.trim()); // Title Case for name
-  position = position.trim().toUpperCase(); // ALL CAPS for position
+  // Normalize
+  name = toTitleCase(name.trim());
+  position = position.trim().toUpperCase();
   bio = bio ? bio.trim() : null;
+  const yesOrNoValue = yes_or_no ? yes_or_no.trim().toUpperCase() : null;
 
   try {
     const result = await pool.query(
       `
       UPDATE candidates 
-      SET name = $1, position = $2, bio = $3
-      WHERE id = $4
-      RETURNING id, name, position, bio, photo_url
+      SET name = $1, 
+          position = $2, 
+          bio = $3, 
+          yes_or_no = $4
+      WHERE id = $5
+      RETURNING id, name, position, bio, photo_url, yes_or_no
     `,
-      [name, position, bio, id],
+      [name, position, bio, yesOrNoValue, id],
     );
 
     if (result.rows.length === 0) {
@@ -406,15 +415,13 @@ const updateCandidate = async (req, res) => {
 
     // Audit log
     await pool.query(
-      `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details)
-      VALUES ($1, $2, $3, $4)
-    `,
+      `INSERT INTO audit_logs (action, actor_id, actor_role, details)
+       VALUES ($1, $2, $3, $4)`,
       [
         "CANDIDATE_UPDATED",
         adminId,
         req.user.role,
-        { candidate_id: id, name, position },
+        { candidate_id: id, name, position, yes_or_no: yesOrNoValue },
       ],
     );
 
@@ -424,7 +431,7 @@ const updateCandidate = async (req, res) => {
       candidate: result.rows[0],
     });
   } catch (error) {
-    console.error(error);
+    console.error("Update candidate error:", error);
     res
       .status(500)
       .json({ success: false, message: "Failed to update candidate" });
@@ -625,6 +632,7 @@ const getResults = async (req, res) => {
         c.position,
         c.name as candidate_name,
         c.photo_url,
+        c.yes_or_no,
         COUNT(v.id) as votes,
         ROUND(COUNT(v.id) * 100.0 / NULLIF((SELECT COUNT(*) FROM votes), 0), 2) as percentage
       FROM candidates c
@@ -641,6 +649,7 @@ const getResults = async (req, res) => {
       acc[row.position].push({
         name: row.candidate_name,
         photo_url: row.photo_url,
+        yes_or_no: row.yes_or_no,
         votes: parseInt(row.votes),
         percentage: parseFloat(row.percentage) || 0,
       });

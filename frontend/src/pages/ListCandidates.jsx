@@ -14,6 +14,7 @@ const ListCandidates = () => {
     name: "",
     position: "",
     bio: "",
+    yes_or_no: "",
   });
 
   const { token: authToken } = useAuth();
@@ -42,7 +43,6 @@ const ListCandidates = () => {
     fetchCandidates();
   }, []);
 
-  // Reusable Image Component
   const CandidateImage = ({ photo_url, name }) => (
     <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200">
       {photo_url ? (
@@ -51,7 +51,6 @@ const ListCandidates = () => {
           alt={name}
           className="w-full h-full object-cover"
           onError={(e) => {
-            console.error(`Failed image: ${name}`, photo_url);
             e.target.onerror = null;
             e.target.src = "https://via.placeholder.com/56x56?text=No+Photo";
           }}
@@ -66,7 +65,6 @@ const ListCandidates = () => {
 
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Delete candidate "${name}"?`)) return;
-
     setDeletingId(id);
     try {
       await axios.delete(`http://localhost:3000/api/admin/candidates/${id}`, {
@@ -84,9 +82,10 @@ const ListCandidates = () => {
   const openEditModal = (candidate) => {
     setEditingCandidate(candidate);
     setEditForm({
-      name: candidate.name,
-      position: candidate.position,
+      name: candidate.name || "",
+      position: candidate.position || "",
       bio: candidate.bio || "",
+      yes_or_no: candidate.yes_or_no || "", // Important
     });
   };
 
@@ -101,11 +100,9 @@ const ListCandidates = () => {
         { headers: { Authorization: `Bearer ${authToken}` } },
       );
 
-      setCandidates(
-        candidates.map((c) =>
-          c.id === editingCandidate.id ? res.data.candidate : c,
-        ),
-      );
+      // Refresh the list to show updated yes_or_no
+      await fetchCandidates();
+
       setEditingCandidate(null);
       alert("Candidate updated successfully!");
     } catch (err) {
@@ -115,8 +112,8 @@ const ListCandidates = () => {
 
   const filteredCandidates = candidates.filter(
     (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.position.toLowerCase().includes(search.toLowerCase()),
+      c.name?.toLowerCase().includes(search.toLowerCase()) ||
+      c.position?.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -154,6 +151,9 @@ const ListCandidates = () => {
                 <th className="text-left py-5 px-8 font-medium text-gray-600">
                   Bio
                 </th>
+                <th className="text-left py-5 px-8 font-medium text-gray-600">
+                  Yes/No
+                </th>
                 <th className="text-center py-5 px-8 font-medium text-gray-600">
                   Actions
                 </th>
@@ -165,20 +165,21 @@ const ListCandidates = () => {
                   <td className="py-5 px-8 text-gray-500 font-medium">
                     {index + 1}
                   </td>
-
                   <td className="py-5 px-8">
                     <CandidateImage
                       photo_url={candidate.photo_url}
                       name={candidate.name}
                     />
                   </td>
-
                   <td className="py-5 px-8 font-medium">{candidate.name}</td>
                   <td className="py-5 px-8 text-gray-700">
                     {candidate.position}
                   </td>
                   <td className="py-5 px-8 text-gray-600 text-sm line-clamp-2">
                     {candidate.bio || "—"}
+                  </td>
+                  <td className="py-5 px-8 text-gray-600 font-medium">
+                    {candidate.yes_or_no || "—"}
                   </td>
                   <td className="py-5 px-8 text-center space-x-6">
                     <button
@@ -208,7 +209,7 @@ const ListCandidates = () => {
         </div>
       </div>
 
-      {/* Edit Candidate Modal */}
+      {/* Edit Modal */}
       {editingCandidate && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
@@ -242,6 +243,21 @@ const ListCandidates = () => {
                   }
                   className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
                   required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Yes/No (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={editForm.yes_or_no}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, yes_or_no: e.target.value })
+                  }
+                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                  placeholder="YES or NO"
                 />
               </div>
 

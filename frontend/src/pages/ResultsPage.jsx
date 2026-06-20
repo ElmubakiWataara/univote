@@ -224,6 +224,18 @@ const ResultsPage = () => {
                           name={candidate.name}
                         />
 
+                        <span
+                          className={` inline-flex items-center px-3 py-2 text-sm font-semibold ${
+                            candidate.yes_or_no === "YES"
+                              ? "bg-red-100 text-red-700"
+                              : candidate.yes_or_no === "NO"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {candidate.yes_or_no || ""}
+                        </span>
+
                         <div className="flex-1">
                           <div className="flex justify-between mb-2">
                             <div>
@@ -274,7 +286,7 @@ const ResultsPage = () => {
               <div className="flex justify-end mb-4">
                 <button
                   onClick={closeModal}
-                  className="text-3xl text-gray-400 hover:text-gray-600"
+                  className="text-3xl text-gray-400 hover:text-red-600"
                 >
                   ✕
                 </button>
@@ -290,12 +302,24 @@ const ResultsPage = () => {
                 </div>
 
                 <div className="flex-1">
-                  <h2 className="text-4xl font-bold text-gray-900">
-                    {selectedCandidate.name}
-                  </h2>
                   <p className="text-2xl text-indigo-600 mt-1">
                     {selectedCandidate.position}
                   </p>
+
+                  {selectedCandidate.yes_or_no && (
+                    <span
+                      className={`inline-flex mt-3 px-5 py-3  font-semibold ${
+                        selectedCandidate.yes_or_no === "YES"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {selectedCandidate.yes_or_no}
+                    </span>
+                  )}
+                  {/* <p className="text-2xl text-indigo-600 mt-1">
+                    {selectedCandidate.position}
+                  </p> */}
 
                   <div className="mt-8 grid grid-cols-2 gap-8">
                     <div>

@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS candidates (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     position VARCHAR(100) NOT NULL,
+    yes_or_no TEXT,
     bio TEXT,
     photo_url TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
