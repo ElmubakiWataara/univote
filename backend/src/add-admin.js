@@ -1,4 +1,3 @@
-// backend/src/add-admin.js
 const pool = require("./config/db");
 const bcrypt = require("bcryptjs");
 

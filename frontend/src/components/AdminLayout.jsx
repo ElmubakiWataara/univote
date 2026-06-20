@@ -1,4 +1,3 @@
-// frontend/src/components/AdminLayout.jsx
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -84,6 +83,23 @@ const AdminLayout = ({ children }) => {
       label: "Settings",
       icon: "",
       path: "/admin/settings",
+      submenu: [
+        {
+          id: "manage-admins",
+          label: "Manage Admins",
+          path: "/super/manage-admin",
+        },
+        {
+          id: "profile",
+          label: "Profile",
+          path: "/admin/logout",
+        },
+        {
+          id: "config",
+          label: "Election Config",
+          path: "/admin/logout",
+        },
+      ],
     },
   ];
 

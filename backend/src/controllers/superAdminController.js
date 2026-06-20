@@ -1,4 +1,3 @@
-// backend/src/controllers/superAdminController.js
 const pool = require("../config/db");
 
 const toggleElection = async (req, res) => {
@@ -17,13 +16,12 @@ const toggleElection = async (req, res) => {
       `
       UPDATE election_settings 
       SET is_active = $1, 
-          allow_live_results = $2,
           updated_by = $3,
           updated_at = NOW()
       WHERE id = 1
       RETURNING is_active, allow_live_results
     `,
-      [is_active, allow_live_results || false, adminId],
+      [is_active, adminId],
     );
 
     // Log the action
@@ -38,7 +36,6 @@ const toggleElection = async (req, res) => {
         "superadmin",
         JSON.stringify({
           is_active,
-          allow_live_results: allow_live_results || false,
         }),
       ],
     );
@@ -83,6 +80,66 @@ const getAuditLogs = async (req, res) => {
   }
 };
 
+// Create New Admin
+const createAdmin = async (req, res) => {
+  const { username, password } = req.body;
+  const superAdminId = req.user.id;
+
+  if (!username || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Username and password are required",
+    });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must be at least 6 characters",
+    });
+  }
+
+  try {
+    const bcrypt = require("bcryptjs");
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      `
+      INSERT INTO admins (username, password_hash, role)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (username) DO NOTHING
+      RETURNING id, username, role
+    `,
+      [username, hashedPassword, "admin"],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Username already exists",
+      });
+    }
+
+    // Audit log
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+    `,
+      ["ADMIN_CREATED", superAdminId, "superadmin", { new_admin: username }],
+    );
+
+    res.json({
+      success: true,
+      message: "New admin created successfully",
+      admin: result.rows[0],
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to create admin" });
+  }
+};
+
 const getAllAdmins = async (req, res) => {
   try {
     const result = await pool.query(`
@@ -100,8 +157,153 @@ const getAllAdmins = async (req, res) => {
   }
 };
 
+// Update Admin (mainly for password reset)
+const updateAdmin = async (req, res) => {
+  const { id } = req.params;
+  const { username, password } = req.body;
+  const superAdminId = req.user.id;
+
+  if (!username && !password) {
+    return res.status(400).json({
+      success: false,
+      message: "At least username or password is required",
+    });
+  }
+
+  try {
+    let updateFields = [];
+    let values = [];
+    let paramCount = 1;
+
+    if (username) {
+      updateFields.push(`username = $${paramCount++}`);
+      values.push(username.trim());
+    }
+
+    if (password) {
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "Password must be at least 6 characters",
+        });
+      }
+      const bcrypt = require("bcryptjs");
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateFields.push(`password_hash = $${paramCount++}`);
+      values.push(hashedPassword);
+    }
+
+    values.push(id);
+
+    const result = await pool.query(
+      `
+      UPDATE admins 
+      SET ${updateFields.join(", ")}
+      WHERE id = $${paramCount} AND role = 'admin'
+      RETURNING id, username, role
+      `,
+      values,
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found or cannot be modified",
+      });
+    }
+
+    // Audit log
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+    `,
+      [
+        "ADMIN_UPDATED",
+        superAdminId,
+        "superadmin",
+        { admin_id: id, updated_fields: Object.keys(req.body) },
+      ],
+    );
+
+    res.json({
+      success: true,
+      message: "Admin updated successfully",
+      admin: result.rows[0],
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to update admin" });
+  }
+};
+
+// Delete Admin
+const deleteAdmin = async (req, res) => {
+  const { id } = req.params;
+  const superAdminId = req.user.id;
+
+  try {
+    // Prevent deleting superadmin or self
+    const adminCheck = await pool.query(
+      "SELECT role FROM admins WHERE id = $1",
+      [id],
+    );
+
+    if (adminCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found",
+      });
+    }
+
+    if (adminCheck.rows[0].role === "superadmin") {
+      return res.status(403).json({
+        success: false,
+        message: "Cannot delete Super Admin account",
+      });
+    }
+
+    const result = await pool.query(
+      "DELETE FROM admins WHERE id = $1 AND role = 'admin' RETURNING id, username",
+      [id],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Admin not found or cannot be deleted",
+      });
+    }
+
+    // Audit log
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+    `,
+      [
+        "ADMIN_DELETED",
+        superAdminId,
+        "superadmin",
+        { deleted_admin_id: id, username: result.rows[0].username },
+      ],
+    );
+
+    res.json({
+      success: true,
+      message: "Admin deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to delete admin" });
+  }
+};
+
 module.exports = {
   toggleElection,
   getAuditLogs,
   getAllAdmins,
+  createAdmin,
+  updateAdmin,
+  deleteAdmin,
 };

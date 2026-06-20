@@ -1,4 +1,3 @@
-// frontend/src/pages/AddCandidate.jsx
 import { useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";

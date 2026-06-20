@@ -1,4 +1,3 @@
-// backend/src/add-test-voters.js
 const pool = require("./config/db");
 
 async function addTestVoters() {

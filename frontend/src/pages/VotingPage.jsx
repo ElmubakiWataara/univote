@@ -1,4 +1,3 @@
-// frontend/src/pages/VotingPage.jsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -112,7 +111,7 @@ const VotingPage = () => {
     }
   };
 
-  // ==================== UPDATED SUBMISSION LOGIC ====================
+  //  SUBMISSION LOGIC
   const handleSubmitAllVotes = async () => {
     if (submitting) return;
     setSubmitting(true);
@@ -219,7 +218,7 @@ const VotingPage = () => {
         </div>
 
         <div className="bg-white rounded-3xl shadow-xl p-10">
-          <h2 className="text-3xl font-bold text-center mb-10">
+          <h2 className="text-5xl font-bold text-center mb-10">
             {currentPosition?.position}
           </h2>
           <button

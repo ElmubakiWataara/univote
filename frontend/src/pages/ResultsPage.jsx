@@ -1,4 +1,3 @@
-// frontend/src/pages/ResultsPage.jsx
 import { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
@@ -62,6 +61,7 @@ const ResultsPage = () => {
           Position: position,
           Candidate: c.name,
           Votes: c.votes,
+          "Yes/No": c.yes_or_no,
           Percentage: `${c.percentage}%`,
         });
       });
@@ -95,13 +95,14 @@ const ResultsPage = () => {
       const tableData = candidates.map((c) => [
         c.name,
         c.votes,
+        c.yes_or_no,
         `${c.percentage}%`,
       ]);
 
       // Correct way to call autoTable
       autoTable(doc, {
         startY: y,
-        head: [["Candidate", "Votes", "Percentage"]],
+        head: [["Candidate", "Votes", "Yes/No", "Percentage"]],
         body: tableData,
         theme: "grid",
         styles: { fontSize: 11 },
@@ -117,13 +118,13 @@ const ResultsPage = () => {
   // Reusable Image Component
   const CandidateImage = ({ photo_url, name, size = "16" }) => (
     <div
-      className={`w-${size} h-${size} bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0`}
+      className={`w-${size} h-${size} bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0 `}
     >
       {photo_url ? (
         <img
           src={photo_url}
           alt={name}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover "
           onError={(e) => {
             console.error(`Failed image: ${name}`, photo_url);
             e.target.onerror = null;
@@ -293,7 +294,7 @@ const ResultsPage = () => {
               </div>
 
               <div className="flex flex-col md:flex-row gap-8">
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0  ">
                   <CandidateImage
                     photo_url={selectedCandidate.photo_url}
                     name={selectedCandidate.name}

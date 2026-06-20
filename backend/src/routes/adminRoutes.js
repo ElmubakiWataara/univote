@@ -1,4 +1,3 @@
-// backend/src/routes/adminRoutes.js
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
@@ -16,7 +15,6 @@ const {
   deleteCandidate,
   getResults,
   bulkRegisterVoters,
-  createAdmin,
 } = require("../controllers/adminController");
 
 // Setup multer for photo upload
@@ -47,6 +45,5 @@ router.put("/candidates/:id", updateCandidate);
 router.delete("/candidates/:id", deleteCandidate);
 router.get("/results", getResults);
 router.post("/voters/bulk", upload.single("file"), bulkRegisterVoters);
-router.post("/create-admin", createAdmin); // Only superadmin can access
 
 module.exports = router;
