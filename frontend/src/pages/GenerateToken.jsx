@@ -1,3 +1,4 @@
+// frontend/src/pages/GenerateToken.jsx
 import { useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";

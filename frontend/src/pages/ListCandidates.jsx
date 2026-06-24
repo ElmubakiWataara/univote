@@ -1,3 +1,4 @@
+// frontend/src/pages/ListCandidates.jsx
 import { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";

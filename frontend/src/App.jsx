@@ -1,3 +1,4 @@
+// frontend/src/App.jsx
 import {
   BrowserRouter as Router,
   Routes,
@@ -19,7 +20,6 @@ import VoterTokenInput from "./pages/VoterTokenInput";
 import VotingPage from "./pages/VotingPage";
 import ResultsPage from "./pages/ResultsPage";
 import AuditLogs from "./pages/AuditLogs";
-import ManageAdmins from "./pages/ManageAdmins";
 
 // Loading Spinner Component
 const LoadingScreen = () => (
@@ -158,14 +158,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <Settings />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/super/manage-admin"
-            element={
-              <ProtectedRoute>
-                <ManageAdmins />
               </ProtectedRoute>
             }
           />

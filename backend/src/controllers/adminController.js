@@ -1,3 +1,4 @@
+// backend/src/controllers/adminController.js
 const pool = require("../config/db");
 const crypto = require("crypto");
 const {
@@ -671,6 +672,64 @@ const getResults = async (req, res) => {
 };
 
 // Create New Admin (Super Admin Only)
+const createAdmin = async (req, res) => {
+  const { username, password } = req.body;
+  const superAdminId = req.user.id;
+
+  if (!username || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Username and password are required",
+    });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must be at least 6 characters",
+    });
+  }
+
+  try {
+    const bcrypt = require("bcryptjs");
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      `
+      INSERT INTO admins (username, password_hash, role)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (username) DO NOTHING
+      RETURNING id, username, role
+    `,
+      [username, hashedPassword, "admin"],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Username already exists",
+      });
+    }
+
+    // Audit log
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+    `,
+      ["ADMIN_CREATED", superAdminId, "superadmin", { new_admin: username }],
+    );
+
+    res.json({
+      success: true,
+      message: "New admin created successfully",
+      admin: result.rows[0],
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Failed to create admin" });
+  }
+};
 
 module.exports = {
   registerVoter,
@@ -684,4 +743,5 @@ module.exports = {
   deleteCandidate,
   getResults,
   bulkRegisterVoters,
+  createAdmin,
 };
