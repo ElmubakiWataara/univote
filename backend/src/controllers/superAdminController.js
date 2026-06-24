@@ -1,4 +1,4 @@
-// backend/src/controllers/superAdminController.js
+const bcrypt = require("bcryptjs");
 const pool = require("../config/db");
 
 const toggleElection = async (req, res) => {
@@ -102,7 +102,7 @@ const getAllAdmins = async (req, res) => {
 
 // Create New Admin (Super Admin Only)
 const createAdmin = async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, role } = req.body;
   const superAdminId = req.user.id;
 
   if (!username || !password) {
@@ -120,8 +120,11 @@ const createAdmin = async (req, res) => {
   }
 
   try {
-    const bcrypt = require("bcryptjs");
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    // allowed roles (security control)
+    const allowedRoles = ["admin", "superadmin"];
+    const finalRole = allowedRoles.includes(role) ? role : "admin";
 
     const result = await pool.query(
       `
@@ -129,8 +132,8 @@ const createAdmin = async (req, res) => {
       VALUES ($1, $2, $3)
       ON CONFLICT (username) DO NOTHING
       RETURNING id, username, role
-    `,
-      [username, hashedPassword, "admin"],
+      `,
+      [username, hashedPassword, finalRole],
     );
 
     if (result.rows.length === 0) {
@@ -139,24 +142,39 @@ const createAdmin = async (req, res) => {
         message: "Username already exists",
       });
     }
+    //only admins to add admins
+    if (role === "superadmin" && req.user.role !== "superadmin") {
+      return res.status(403).json({
+        success: false,
+        message: "Only superadmins can create superadmins",
+      });
+    }
 
-    // Audit log
+    // audit log
     await pool.query(
       `
       INSERT INTO audit_logs (action, actor_id, actor_role, details)
       VALUES ($1, $2, $3, $4)
-    `,
-      ["ADMIN_CREATED", superAdminId, "superadmin", { new_admin: username }],
+      `,
+      [
+        "ADMIN_CREATED",
+        superAdminId,
+        "superadmin",
+        { new_admin: username, role: finalRole },
+      ],
     );
 
-    res.json({
+    return res.json({
       success: true,
       message: "New admin created successfully",
       admin: result.rows[0],
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Failed to create admin" });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create admin",
+    });
   }
 };
 // Update Admin (mainly for password reset)

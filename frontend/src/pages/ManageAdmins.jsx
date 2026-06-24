@@ -7,7 +7,11 @@ import { useAuth } from "../context/AuthContext";
 const ManageAdmins = () => {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+    role: "admin",
+  });
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [editForm, setEditForm] = useState({ username: "", password: "" });
   const [submitting, setSubmitting] = useState(false);
@@ -37,6 +41,7 @@ const ManageAdmins = () => {
 
   const handleCreateAdmin = async (e) => {
     e.preventDefault();
+
     if (!formData.username || !formData.password) return;
 
     setSubmitting(true);
@@ -47,11 +52,20 @@ const ManageAdmins = () => {
       const res = await axios.post(
         "http://localhost:3000/api/super/create-admin",
         formData,
-        { headers: { Authorization: `Bearer ${authToken}` } },
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`,
+          },
+        },
       );
 
       setSuccess("Admin created successfully!");
-      setFormData({ username: "", password: "" });
+      setFormData({
+        username: "",
+        password: "",
+        role: "admin",
+      });
+
       fetchAdmins();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create admin");
@@ -113,7 +127,7 @@ const ManageAdmins = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           {/* Create New Admin - Compact Form */}
-          <div className="lg:col-span-2 bg-white rounded-3xl shadow p-8">
+          <div className="lg:col-span-2 self-start bg-white rounded-3xl shadow p-8">
             <h2 className="text-xl font-semibold mb-6">Create New Admin</h2>
             <form onSubmit={handleCreateAdmin} className="space-y-5">
               <div>
@@ -147,6 +161,22 @@ const ManageAdmins = () => {
                   required
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Role
+                </label>
+
+                <select
+                  value={formData.role}
+                  onChange={(e) =>
+                    setFormData({ ...formData, role: e.target.value })
+                  }
+                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="superadmin">Super Admin</option>
+                </select>
+              </div>
 
               <button
                 type="submit"
@@ -164,8 +194,8 @@ const ManageAdmins = () => {
           </div>
 
           {/* Admins List - Scrollable Table */}
-          <div className="lg:col-span-3 bg-white rounded-3xl shadow flex flex-col">
-            <div className="p-6 border-b flex justify-between items-center flex-shrink-0">
+          <div className="lg:col-span-3 self-start bg-white rounded-3xl shadow">
+            <div className="p-6 border-b flex justify-between items-center">
               <h2 className="text-xl font-semibold">
                 All Admins ({admins.length})
               </h2>
@@ -173,11 +203,11 @@ const ManageAdmins = () => {
 
             <div className="flex-1 overflow-auto">
               {loading ? (
-                <div className="p-12 text-center text-gray-500">
+                <div className="max-h-[700px] overflow-auto">
                   Loading admins...
                 </div>
               ) : (
-                <table className="w-full min-w-full">
+                <table className="w-full">
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
                       <th className="text-left py-5 px-8 font-medium text-gray-600">
