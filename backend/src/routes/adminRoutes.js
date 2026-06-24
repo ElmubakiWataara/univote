@@ -16,7 +16,6 @@ const {
   deleteCandidate,
   getResults,
   bulkRegisterVoters,
-  createAdmin,
 } = require("../controllers/adminController");
 
 // Setup multer for photo upload
@@ -39,7 +38,6 @@ router.post("/register-voter", registerVoter);
 router.post("/generate-token", generateVoterToken);
 router.get("/voters", getAllVoters);
 router.get("/candidates", getCandidates);
-// router.post("/candidates", addCandidate);
 router.post("/candidates", upload.single("photo"), addCandidate); // ← Updated with upload
 router.put("/voters/:id", updateVoter);
 router.delete("/voters/:id", deleteVoter);
@@ -47,6 +45,5 @@ router.put("/candidates/:id", updateCandidate);
 router.delete("/candidates/:id", deleteCandidate);
 router.get("/results", getResults);
 router.post("/voters/bulk", upload.single("file"), bulkRegisterVoters);
-router.post("/create-admin", createAdmin); // Only superadmin can access
 
 module.exports = router;
