@@ -83,7 +83,7 @@ const AdminLayout = ({ children }) => {
       id: "settings",
       label: "Settings",
       icon: "",
-      path: "/admin/settings",
+      // path: "/admin/settings",
       submenu: [
         {
           id: "manage-admins",

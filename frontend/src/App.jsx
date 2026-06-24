@@ -15,7 +15,7 @@ import GenerateToken from "./pages/GenerateToken";
 import ListVoters from "./pages/ListVoters";
 import AddCandidate from "./pages/AddCandidate";
 import ListCandidates from "./pages/ListCandidates";
-import Settings from "./pages/Settings";
+// import Settings from "./pages/Settings";
 import VoterTokenInput from "./pages/VoterTokenInput";
 import VotingPage from "./pages/VotingPage";
 import ResultsPage from "./pages/ResultsPage";
@@ -154,14 +154,14 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
+          {/* <Route
             path="/admin/settings"
             element={
               <ProtectedRoute>
                 <Settings />
               </ProtectedRoute>
             }
-          />
+          /> */}
 
           <Route
             path="/super/manage-admins"
