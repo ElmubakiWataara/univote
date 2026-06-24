@@ -203,65 +203,67 @@ const ManageAdmins = () => {
 
             <div className="flex-1 overflow-auto">
               {loading ? (
-                <div className="max-h-[700px] overflow-auto">
+                <div className="p-12 text-center text-gray-500">
                   Loading admins...
                 </div>
               ) : (
-                <table className="w-full">
-                  <thead className="bg-gray-50 sticky top-0 z-10">
-                    <tr>
-                      <th className="text-left py-5 px-8 font-medium text-gray-600">
-                        ID
-                      </th>
-                      <th className="text-left py-5 px-8 font-medium text-gray-600">
-                        Username
-                      </th>
-                      <th className="text-left py-5 px-8 font-medium text-gray-600">
-                        Role
-                      </th>
-                      <th className="text-left py-5 px-8 font-medium text-gray-600">
-                        Created
-                      </th>
-                      <th className="text-center py-5 px-8 font-medium text-gray-600">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {admins.map((admin) => (
-                      <tr key={admin.id} className="hover:bg-gray-50">
-                        <td className="py-5 px-8">{admin.id}</td>
-                        <td className="py-5 px-8 font-medium">
-                          {admin.username}
-                        </td>
-                        <td className="py-5 px-8">
-                          <span className="capitalize px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
-                            {admin.role}
-                          </span>
-                        </td>
-                        <td className="py-5 px-8 text-gray-500 text-sm">
-                          {new Date(admin.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="py-5 px-8 text-center space-x-4">
-                          <button
-                            onClick={() => openEditModal(admin)}
-                            className="text-blue-600 hover:text-blue-700 font-medium"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleDeleteAdmin(admin.id, admin.username)
-                            }
-                            className="text-red-600 hover:text-red-700 font-medium"
-                          >
-                            Delete
-                          </button>
-                        </td>
+                <div className="max-h-[600px] overflow-auto-6">
+                  <table className="w-full">
+                    <thead className="bg-gray-50 sticky top-0 z-10">
+                      <tr>
+                        <th className="text-left py-5 px-8 font-medium text-gray-600">
+                          ID
+                        </th>
+                        <th className="text-left py-5 px-8 font-medium text-gray-600">
+                          Username
+                        </th>
+                        <th className="text-left py-5 px-8 font-medium text-gray-600">
+                          Role
+                        </th>
+                        <th className="text-left py-5 px-8 font-medium text-gray-600">
+                          Created
+                        </th>
+                        <th className="text-center py-5 px-8 font-medium text-gray-600">
+                          Actions
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y">
+                      {admins.map((admin) => (
+                        <tr key={admin.id} className="hover:bg-gray-50">
+                          <td className="py-5 px-8">{admin.id}</td>
+                          <td className="py-5 px-8 font-medium">
+                            {admin.username}
+                          </td>
+                          <td className="py-5 px-8">
+                            <span className="capitalize px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                              {admin.role}
+                            </span>
+                          </td>
+                          <td className="py-5 px-8 text-gray-500 text-sm">
+                            {new Date(admin.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="py-5 px-8 text-center space-x-4">
+                            <button
+                              onClick={() => openEditModal(admin)}
+                              className="text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleDeleteAdmin(admin.id, admin.username)
+                              }
+                              className="text-red-600 hover:text-red-700 font-medium"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
 
