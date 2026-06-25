@@ -12,6 +12,9 @@ const SuperAdminDashboard = () => {
     candidates: 0,
     totalAdmins: 0,
     electionStatus: "Closed",
+    electionTitle: "",
+    academicYear: "",
+    logoUrl: "",
   });
   const [loading, setLoading] = useState(true);
   const [logsLoading, setLogsLoading] = useState(true);
@@ -27,36 +30,60 @@ const SuperAdminDashboard = () => {
     setError("");
 
     try {
-      const [votersRes, resultsRes, candidatesRes] = await Promise.allSettled([
-        axios.get("http://localhost:3000/api/admin/voters", {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }),
-        axios.get("http://localhost:3000/api/admin/results", {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }),
-        axios.get("http://localhost:3000/api/admin/candidates", {
-          headers: { Authorization: `Bearer ${authToken}` },
-        }),
-      ]);
+      const [votersRes, resultsRes, candidatesRes, electionRes] =
+        await Promise.allSettled([
+          axios.get("http://localhost:3000/api/admin/voters", {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }),
+          axios.get("http://localhost:3000/api/admin/results", {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }),
+          axios.get("http://localhost:3000/api/admin/candidates", {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }),
+          axios.get("http://localhost:3000/api/super/election-settings", {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }),
+        ]);
 
       setStats({
         totalVoters:
           votersRes.status === "fulfilled"
             ? votersRes.value.data.voters?.length || 0
             : 0,
+
         votesCast:
           resultsRes.status === "fulfilled"
             ? resultsRes.value.data.total_votes || 0
             : 0,
+
         candidates:
           candidatesRes.status === "fulfilled"
             ? candidatesRes.value.data.candidates?.length || 0
             : 0,
+
         totalAdmins: 3,
+
         electionStatus:
-          resultsRes.status === "fulfilled" && resultsRes.value.data.is_active
+          electionRes.status === "fulfilled" &&
+          electionRes.value.data.settings?.is_active
             ? "Active"
             : "Closed",
+
+        electionTitle:
+          electionRes.status === "fulfilled"
+            ? electionRes.value.data.settings?.title || "University Election"
+            : "University Election",
+
+        academicYear:
+          electionRes.status === "fulfilled"
+            ? electionRes.value.data.settings?.academic_year || ""
+            : "",
+
+        logoUrl:
+          electionRes.status === "fulfilled"
+            ? electionRes.value.data.settings?.logo_url || ""
+            : "",
       });
     } catch (err) {
       console.error(err);
@@ -100,24 +127,47 @@ const SuperAdminDashboard = () => {
 
   return (
     <AdminLayout currentPage="dashboard">
-      <div className="space-y-10">
+      <div className="space-y-8">
         {/* Header */}
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900">
-              Super Admin Dashboard
-            </h1>
-            <p className="text-gray-600 mt-2 text-lg">Full System Control</p>
+        <div className="flex justify-between items-center bg-white rounded-3xl shadow-sm p-4">
+          <div className="flex items-center gap-6">
+            {stats.logoUrl ? (
+              <img
+                src={`http://localhost:3000${stats.logoUrl}`}
+                alt="Election Logo"
+                className="w-20 h-20 rounded-2xl object-contain border"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-4xl">
+                🗳️
+              </div>
+            )}
+
+            <div>
+              <h1 className="text-3xl font-bold">
+                {stats.electionTitle || "University Election"}
+              </h1>
+
+              <p className="text-gray-500 mt-1">{stats.academicYear}</p>
+
+              <p className="text-gray-500 mt-2">
+                Super Administrator Dashboard
+              </p>
+            </div>
           </div>
-          <div className="text-right">
+
+          <div>
             <span
-              className={`inline-flex px-5 py-2.5 rounded-3xl text-sm font-semibold ${
+              className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold ${
                 stats.electionStatus === "Active"
-                  ? "bg-emerald-100 text-emerald-700"
+                  ? "bg-green-100 text-green-700"
                   : "bg-red-100 text-red-700"
               }`}
             >
-              ● Election {stats.electionStatus}
+              <span className="text-lg">
+                {stats.electionStatus === "Active" ? "🟢" : "🔴"}
+              </span>
+              Election {stats.electionStatus}
             </span>
           </div>
         </div>
