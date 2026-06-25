@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const pool = require("../config/db");
 
 const toggleElection = async (req, res) => {
-  const { is_active, allow_live_results } = req.body;
+  const { is_active } = req.body;
   const adminId = req.user.id;
 
   if (typeof is_active !== "boolean") {
@@ -15,30 +15,47 @@ const toggleElection = async (req, res) => {
   try {
     const result = await pool.query(
       `
-      UPDATE election_settings 
-      SET is_active = $1, 
-          allow_live_results = $2,
-          updated_by = $3,
-          updated_at = NOW()
+      UPDATE election_settings
+      SET
+        is_active = $1,
+        updated_by = $2,
+        updated_at = NOW()
       WHERE id = 1
-      RETURNING is_active, allow_live_results
-    `,
-      [is_active, allow_live_results || false, adminId],
+      RETURNING is_active
+      `,
+      [is_active, adminId],
     );
 
-    // Log the action
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Election settings not found",
+      });
+    }
+
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details)
-      VALUES ($1, $2, $3, $4)
-    `,
+      INSERT INTO audit_logs
+      (
+        action,
+        actor_id,
+        actor_role,
+        details
+      )
+      VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4
+      )
+      `,
       [
         "ELECTION_TOGGLE",
         adminId,
-        "superadmin",
+        req.user.role,
         JSON.stringify({
           is_active,
-          allow_live_results: allow_live_results || false,
         }),
       ],
     );
@@ -49,10 +66,12 @@ const toggleElection = async (req, res) => {
       settings: result.rows[0],
     });
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to update election status" });
+    console.error("Toggle election error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update election status",
+    });
   }
 };
 
@@ -319,6 +338,147 @@ const deleteAdmin = async (req, res) => {
   }
 };
 
+const getElectionSettings = async (req, res) => {
+  try {
+    let result = await pool.query(
+      `
+      SELECT
+        id,
+        title,
+        logo_url,
+        academic_year,
+        description,
+        is_active,
+        updated_by,
+        updated_at
+      FROM election_settings
+      WHERE id = 1
+      `,
+    );
+
+    if (result.rows.length === 0) {
+      await pool.query(
+        `
+        INSERT INTO election_settings
+        (
+          id,
+          is_active
+        )
+        VALUES
+        (
+          1,
+          FALSE
+        )
+        ON CONFLICT (id) DO NOTHING
+        `,
+      );
+
+      result = await pool.query(
+        `
+        SELECT *
+        FROM election_settings
+        WHERE id = 1
+        `,
+      );
+    }
+
+    res.json({
+      success: true,
+      settings: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Get election settings error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch election settings",
+    });
+  }
+};
+
+const updateElectionConfig = async (req, res) => {
+  const adminId = req.user.id;
+
+  let { title, academic_year, description } = req.body;
+
+  try {
+    const logoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const existing = await pool.query(
+      `
+      SELECT logo_url
+      FROM election_settings
+      WHERE id = 1
+      `,
+    );
+
+    const finalLogo = logoUrl || existing.rows[0]?.logo_url || null;
+
+    const result = await pool.query(
+      `
+      UPDATE election_settings
+      SET
+        title = $1,
+        academic_year = $2,
+        description = $3,
+        logo_url = $4,
+        updated_by = $5,
+        updated_at = NOW()
+      WHERE id = 1
+      RETURNING *
+      `,
+      [
+        title || null,
+        academic_year || null,
+        description || null,
+        finalLogo,
+        adminId,
+      ],
+    );
+
+    await pool.query(
+      `
+      INSERT INTO audit_logs
+      (
+        action,
+        actor_id,
+        actor_role,
+        details
+      )
+      VALUES
+      (
+        $1,
+        $2,
+        $3,
+        $4
+      )
+      `,
+      [
+        "ELECTION_CONFIG_UPDATED",
+        adminId,
+        req.user.role,
+        JSON.stringify({
+          title,
+          academic_year,
+        }),
+      ],
+    );
+
+    res.json({
+      success: true,
+      message: "Election configuration updated",
+      settings: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Update election config error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update election configuration",
+    });
+  }
+};
+
 module.exports = {
   toggleElection,
   getAuditLogs,
@@ -326,4 +486,6 @@ module.exports = {
   createAdmin,
   updateAdmin,
   deleteAdmin,
+  getElectionSettings,
+  updateElectionConfig,
 };

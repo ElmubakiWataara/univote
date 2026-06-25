@@ -21,6 +21,7 @@ import VotingPage from "./pages/VotingPage";
 import ResultsPage from "./pages/ResultsPage";
 import AuditLogs from "./pages/AuditLogs";
 import ManageAdmins from "./pages/ManageAdmins";
+import ElectionConfig from "./pages/ElectionConfig";
 
 // Loading Spinner Component
 const LoadingScreen = () => (
@@ -154,14 +155,14 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* <Route
-            path="/admin/settings"
+          <Route
+            path="/super/election-config"
             element={
               <ProtectedRoute>
-                <Settings />
+                <ElectionConfig />
               </ProtectedRoute>
             }
-          /> */}
+          />
 
           <Route
             path="/super/manage-admins"

@@ -90,6 +90,11 @@ const AdminLayout = ({ children }) => {
           label: "Manage Admins",
           path: "/super/manage-admins",
         },
+        {
+          id: "election-config",
+          label: "Election Config",
+          path: "/super/election-config",
+        },
       ],
     },
   ];

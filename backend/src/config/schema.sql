@@ -56,7 +56,6 @@ CREATE TABLE IF NOT EXISTS votes (
 CREATE TABLE IF NOT EXISTS election_settings (
     id SERIAL PRIMARY KEY,
     is_active BOOLEAN DEFAULT FALSE,
-    allow_live_results BOOLEAN DEFAULT FALSE,
     updated_by INTEGER REFERENCES admins(id),
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -73,6 +72,6 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 );
 
 -- Insert default election setting if not exists
-INSERT INTO election_settings (is_active, allow_live_results)
-VALUES (false, false)
+INSERT INTO election_settings (is_active)
+VALUES (false)
 ON CONFLICT DO NOTHING;
