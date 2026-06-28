@@ -1,4 +1,3 @@
-// backend/src/helpers/stringHelpers.js
 
 // Convert to Title Case (e.g., "john doe" → "John Doe")
 const toTitleCase = (str) => {

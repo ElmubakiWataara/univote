@@ -13,6 +13,7 @@ const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const voteRoutes = require("./routes/voteRoutes");
 const superAdminRoutes = require("./routes/superAdminRoutes");
+const publicRoutes = require("./routes/publicRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,7 +42,7 @@ app.use(limiter);
 // Serve built React frontend (from Phase 1)
 app.use(
   "/uploads",
-  express.static(path.join(__dirname, "../uploads"), {
+  express.static(path.join(__dirname, "uploads"), {
     setHeaders: (res) => {
       res.set("Cache-Control", "public, max-age=31536000");
     },
@@ -59,6 +60,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // Routes
+app.use("/api/public", publicRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/vote", voteRoutes);

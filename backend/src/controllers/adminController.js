@@ -671,6 +671,31 @@ const getResults = async (req, res) => {
   }
 };
 
+//basic information
+const getPublicElectionInfo = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        title,
+        logo_url,
+        academic_year,
+        is_active
+      FROM election_settings
+      WHERE id = 1
+    `);
+
+    res.json({
+      success: true,
+      election: result.rows[0],
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch election information",
+    });
+  }
+};
+
 module.exports = {
   registerVoter,
   generateVoterToken,
@@ -683,4 +708,5 @@ module.exports = {
   deleteCandidate,
   getResults,
   bulkRegisterVoters,
+  getPublicElectionInfo,
 };

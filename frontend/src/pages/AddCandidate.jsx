@@ -1,4 +1,3 @@
-// frontend/src/pages/AddCandidate.jsx
 import { useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
@@ -74,43 +73,12 @@ const AddCandidate = () => {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Add New Candidate
         </h1>
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-600 mb-4">
           Add a candidate to the election ballot.
         </p>
 
-        <div className="bg-white rounded-3xl shadow p-10">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Photo Upload Section */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Candidate Photo (Optional)
-              </label>
-              <div className="border-2 border-dashed border-gray-300 rounded-3xl p-10 text-center">
-                {photoPreview ? (
-                  <img
-                    src={photoPreview}
-                    alt="Preview"
-                    className="mx-auto h-48 w-48 object-cover rounded-2xl shadow"
-                  />
-                ) : (
-                  <div className="text-gray-400 text-7xl mb-4"> </div>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                  className="hidden"
-                  id="photo-upload"
-                />
-                <label
-                  htmlFor="photo-upload"
-                  className="cursor-pointer text-indigo-600 hover:text-indigo-700 font-medium block mt-4"
-                >
-                  {photoPreview ? "Change Photo" : "Click to Upload Photo"}
-                </label>
-              </div>
-            </div>
-
+        <div className="bg-white rounded-3xl shadow p-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name
@@ -167,9 +135,40 @@ const AddCandidate = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, bio: e.target.value })
                 }
-                className="w-full px-6 py-4 border border-gray-300 rounded-2xl h-32 focus:ring-2 focus:ring-indigo-600"
+                className="w-full px-6 py-4 border border-gray-300 rounded-2xl h-22 focus:ring-2 focus:ring-indigo-600"
                 placeholder="Brief introduction or campaign statement..."
               />
+            </div>
+
+            {/* Photo Upload Section */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Candidate Photo (Optional)
+              </label>
+              <div className="h-20 border-2 border-dashed border-gray-300 rounded-3xl p-2 text-center">
+                {photoPreview ? (
+                  <img
+                    className="mx-auto h-32 w-32 object-cover rounded-2xl shadow"
+                    src={photoPreview}
+                    alt="Preview"
+                  />
+                ) : (
+                  <div className="text-gray-400 text-7xl mb-4"> </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                  id="photo-upload"
+                />
+                <label
+                  htmlFor="photo-upload"
+                  className="cursor-pointer text-indigo-600 hover:text-indigo-700 font-medium block mt-4"
+                >
+                  {photoPreview ? "Change Photo" : "Click to Upload Photo"}
+                </label>
+              </div>
             </div>
 
             <button

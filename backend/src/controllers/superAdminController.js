@@ -405,32 +405,30 @@ const updateElectionConfig = async (req, res) => {
     const logoUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     const existing = await pool.query(
-      `
-      SELECT logo_url
-      FROM election_settings
-      WHERE id = 1
-      `,
+      "SELECT * FROM election_settings WHERE id = 1",
     );
 
-    const finalLogo = logoUrl || existing.rows[0]?.logo_url || null;
+    const current = existing.rows[0];
+
+    const finalLogo = logoUrl ?? current.logo_url;
 
     const result = await pool.query(
       `
-      UPDATE election_settings
-      SET
-        title = $1,
-        academic_year = $2,
-        description = $3,
-        logo_url = $4,
-        updated_by = $5,
-        updated_at = NOW()
-      WHERE id = 1
-      RETURNING *
-      `,
+        UPDATE election_settings
+        SET
+            title = $1,
+            academic_year = $2,
+            description = $3,
+            logo_url = $4,
+            updated_by = $5,
+            updated_at = NOW()
+        WHERE id = 1
+        RETURNING *
+        `,
       [
-        title || null,
-        academic_year || null,
-        description || null,
+        title ?? current.title,
+        academic_year ?? current.academic_year,
+        description ?? current.description,
         finalLogo,
         adminId,
       ],

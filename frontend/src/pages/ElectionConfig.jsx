@@ -53,7 +53,11 @@ const ElectionSettings = () => {
       });
 
       if (settings.logo_url) {
-        setLogoPreview(`http://localhost:3000${settings.logo_url}`);
+        setLogoPreview(
+          settings.logo_url.startsWith("/")
+            ? settings.logo_url
+            : `/uploads${settings.logo_url.startsWith("/") ? "" : "/"}${settings.logo_url}`,
+        );
       }
     } catch (err) {
       console.error(err);
@@ -95,17 +99,11 @@ const ElectionSettings = () => {
 
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
-
     if (!file) return;
 
     setLogo(file);
-
     const reader = new FileReader();
-
-    reader.onloadend = () => {
-      setLogoPreview(reader.result);
-    };
-
+    reader.onloadend = () => setLogoPreview(reader.result);
     reader.readAsDataURL(file);
   };
 
@@ -160,7 +158,7 @@ const ElectionSettings = () => {
 
   return (
     <AdminLayout currentPage="settings">
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -268,7 +266,7 @@ const ElectionSettings = () => {
 
         {/* CONFIG TAB */}
         {activeTab === "config" && (
-          <div className="bg-white rounded-3xl shadow p-10 max-w-4xl">
+          <div className="bg-white rounded-3xl shadow p-6 max-w-2xl">
             <form onSubmit={handleConfigSubmit} className="space-y-8">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -320,7 +318,7 @@ const ElectionSettings = () => {
                       description: e.target.value,
                     })
                   }
-                  className="w-full px-6 py-4 h-36 border border-gray-300 rounded-2xl"
+                  className="w-full px-6 py-4 h-20 border border-gray-300 rounded-2xl"
                 />
               </div>
 

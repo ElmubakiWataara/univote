@@ -1,4 +1,3 @@
-// frontend/src/pages/SuperAdminDashboard.jsx
 import { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
@@ -30,7 +29,7 @@ const SuperAdminDashboard = () => {
     setError("");
 
     try {
-      const [votersRes, resultsRes, candidatesRes, electionRes] =
+      const [votersRes, resultsRes, candidatesRes, electionRes, adminsRes] =
         await Promise.allSettled([
           axios.get("http://localhost:3000/api/admin/voters", {
             headers: { Authorization: `Bearer ${authToken}` },
@@ -42,6 +41,9 @@ const SuperAdminDashboard = () => {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
           axios.get("http://localhost:3000/api/super/election-settings", {
+            headers: { Authorization: `Bearer ${authToken}` },
+          }),
+          axios.get("http://localhost:3000/api/super/admins", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
         ]);
@@ -62,7 +64,10 @@ const SuperAdminDashboard = () => {
             ? candidatesRes.value.data.candidates?.length || 0
             : 0,
 
-        totalAdmins: 3,
+        totalAdmins:
+          adminsRes.status === "fulfilled"
+            ? adminsRes.value.data.admins?.length || 0
+            : 0,
 
         electionStatus:
           electionRes.status === "fulfilled" &&
@@ -127,15 +132,23 @@ const SuperAdminDashboard = () => {
 
   return (
     <AdminLayout currentPage="dashboard">
-      <div className="space-y-8">
+      <div className="space-y-4">
         {/* Header */}
         <div className="flex justify-between items-center bg-white rounded-3xl shadow-sm p-4">
           <div className="flex items-center gap-6">
             {stats.logoUrl ? (
               <img
-                src={`http://localhost:3000${stats.logoUrl}`}
+                src={
+                  stats.logoUrl.startsWith("/")
+                    ? stats.logoUrl
+                    : `/uploads${stats.logoUrl.startsWith("/") ? "" : "/"}${stats.logoUrl}`
+                }
                 alt="Election Logo"
                 className="w-20 h-20 rounded-2xl object-contain border"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://via.placeholder.com/80x80?text=Logo";
+                }}
               />
             ) : (
               <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-4xl">
@@ -200,7 +213,9 @@ const SuperAdminDashboard = () => {
           </div>
           <div className="bg-white rounded-3xl p-8 shadow-sm">
             <div className="text-sm text-gray-500">Admins</div>
-            <div className="text-5xl font-bold mt-4">{stats.totalAdmins}</div>
+            <div className="text-5xl font-bold mt-4">
+              {loading ? "—" : stats.totalAdmins}
+            </div>
           </div>
           <div className="bg-white rounded-3xl p-8 shadow-sm">
             <div className="text-sm text-gray-500">Turnout</div>

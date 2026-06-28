@@ -1,4 +1,3 @@
-// frontend/src/App.jsx
 import {
   BrowserRouter as Router,
   Routes,
@@ -22,6 +21,7 @@ import ResultsPage from "./pages/ResultsPage";
 import AuditLogs from "./pages/AuditLogs";
 import ManageAdmins from "./pages/ManageAdmins";
 import ElectionConfig from "./pages/ElectionConfig";
+
 
 // Loading Spinner Component
 const LoadingScreen = () => (
