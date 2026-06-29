@@ -174,9 +174,24 @@ const AdminLayout = ({ children }) => {
         <div className="h-16 bg-white border-b flex items-center px-8 justify-between shadow-sm">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="text-2xl text-gray-600 hover:text-gray-900 transition"
+            className="
+              w-10 h-10     
+              flex items-center justify-center
+              rounded-xl
+              bg-white
+              border border-slate-200
+              text-slate-600
+              hover:text-slate-900
+              hover:bg-slate-100
+              hover:border-slate-300
+              transition-all duration-200
+              shadow-sm
+              active:scale-95
+            "
           >
-            {sidebarOpen ? "◀" : "▶"}
+            <span className="text-lg font-semibold transition-transform duration-300">
+              {sidebarOpen ? "❮" : "❯"}
+            </span>
           </button>
 
           <div className="flex items-center gap-6">

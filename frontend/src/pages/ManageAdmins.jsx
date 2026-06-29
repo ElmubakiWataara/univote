@@ -60,11 +60,11 @@ const ManageAdmins = () => {
       );
 
       setSuccess("Admin created successfully!");
-      setFormData({
+      setFormData(() => ({
         username: "",
         password: "",
         role: "admin",
-      });
+      }));
 
       fetchAdmins();
     } catch (err) {
@@ -136,6 +136,7 @@ const ManageAdmins = () => {
                 </label>
                 <input
                   type="text"
+                  autoComplete="off"
                   value={formData.username}
                   onChange={(e) =>
                     setFormData({ ...formData, username: e.target.value })
