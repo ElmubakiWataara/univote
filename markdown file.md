@@ -290,5 +290,4 @@ Would you like me to generate:
 - Sample React components?
 - A `docker-compose.yml` for easy local setup?
 
-Just say the word and I’ll provide the next piece ready to copy-paste.
 ```

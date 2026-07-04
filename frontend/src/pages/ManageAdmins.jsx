@@ -136,6 +136,7 @@ const ManageAdmins = () => {
                 </label>
                 <input
                   type="text"
+                  name="new-admin-username"
                   autoComplete="off"
                   value={formData.username}
                   onChange={(e) =>
@@ -153,6 +154,8 @@ const ManageAdmins = () => {
                 </label>
                 <input
                   type="password"
+                  name="new-admin-password"
+                  autoComplete="new-password"
                   value={formData.password}
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })

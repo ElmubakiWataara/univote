@@ -260,7 +260,7 @@ const SuperAdminDashboard = () => {
               </button>
 
               <button
-                onClick={() => navigate("/admin/settings")}
+                onClick={() => navigate("/super/manage-admins")}
                 className="p-8 border border-gray-200 hover:border-indigo-300 rounded-3xl text-left transition hover:shadow"
               >
                 <div className="text-4xl mb-4">⚙️</div>

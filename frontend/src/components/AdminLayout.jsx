@@ -11,14 +11,12 @@ const AdminLayout = ({ children }) => {
 
   const isSuperAdmin = user?.role === "superadmin";
 
-  const dashboardPath = isSuperAdmin ? "/admin/super" : "/admin/dashboard";
-
   const navItems = [
     {
       id: "dashboard",
       label: "Dashboard",
       icon: "",
-      path: dashboardPath,
+      path: isSuperAdmin ? "/admin/super" : "/admin/dashboard",
     },
     {
       id: "voters",
@@ -42,62 +40,65 @@ const AdminLayout = ({ children }) => {
         },
       ],
     },
-    {
-      id: "candidates",
-      label: "Manage Candidates",
-      icon: "",
-      submenu: [
-        {
-          id: "add-candidate",
-          label: "Add Candidate",
-          path: "/admin/add-candidate",
-        },
-        {
-          id: "list-candidates",
-          label: "List of Candidates",
-          path: "/admin/list-candidates",
-        },
-      ],
-    },
-
-    {
-      id: "results",
-      label: "Results",
-      icon: "",
-      submenu: [
-        {
-          id: "results",
-          label: "Results",
-          path: "/admin/results",
-        },
-        ,
-        {
-          id: "audit-logs",
-          label: "Audit Logs",
-          path: "/admin/audit-logs",
-        },
-      ],
-    },
-
-    {
-      id: "settings",
-      label: "Settings",
-      icon: "",
-      // path: "/admin/settings",
-      submenu: [
-        {
-          id: "manage-admins",
-          label: "Manage Admins",
-          path: "/super/manage-admins",
-        },
-        {
-          id: "election-config",
-          label: "Election Config",
-          path: "/super/election-config",
-        },
-      ],
-    },
   ];
+
+  if (isSuperAdmin) {
+    navItems.push(
+      {
+        id: "candidates",
+        label: "Manage Candidates",
+        icon: "",
+        submenu: [
+          {
+            id: "add-candidate",
+            label: "Add Candidate",
+            path: "/admin/add-candidate",
+          },
+          {
+            id: "list-candidates",
+            label: "List of Candidates",
+            path: "/admin/list-candidates",
+          },
+        ],
+      },
+
+      {
+        id: "results",
+        label: "Results",
+        icon: "",
+        submenu: [
+          {
+            id: "results",
+            label: "Results",
+            path: "/admin/results",
+          },
+          ,
+          {
+            id: "audit-logs",
+            label: "Audit Logs",
+            path: "/admin/audit-logs",
+          },
+        ],
+
+        id: "settings",
+        label: "Settings",
+        icon: "",
+        // path: "/admin/settings",
+        submenu: [
+          {
+            id: "manage-admins",
+            label: "Manage Admins",
+            path: "/super/manage-admins",
+          },
+          {
+            id: "election-config",
+            label: "Election Config",
+            path: "/super/election-config",
+          },
+        ],
+      },
+    );
+  }
 
   const isActive = (path) => location.pathname === path;
 
@@ -111,7 +112,9 @@ const AdminLayout = ({ children }) => {
         <div className="p-6 flex items-center gap-3 border-b border-white/10">
           <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center text-2xl"></div>
           {sidebarOpen && (
-            <span className="font-bold text-2xl tracking-tight">UniVote</span>
+            <span className="font-bold text-2xl tracking-tight">
+              Esofa Votes
+            </span>
           )}
         </div>
 
