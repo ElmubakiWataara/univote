@@ -3,6 +3,16 @@ import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+//for icons
+import {
+  UserPlus,
+  Ticket,
+  Users,
+  Settings,
+  Vote,
+  RefreshCw,
+  Circle,
+} from "lucide-react";
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -104,8 +114,8 @@ const AdminDashboard = () => {
                 }}
               />
             ) : (
-              <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-4xl">
-                🗳️
+              <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center">
+                <Vote className="w-9 h-9 text-gray-400" strokeWidth={1.75} />
               </div>
             )}
 
@@ -128,9 +138,13 @@ const AdminDashboard = () => {
                   : "bg-red-100 text-red-700"
               }`}
             >
-              <span className="text-lg">
-                {stats.electionStatus === "Active" ? "🟢" : "🔴"}
-              </span>
+              <Circle
+                className={`w-3 h-3 ${
+                  stats.electionStatus === "Active"
+                    ? "fill-green-500 text-green-500"
+                    : "fill-red-500 text-red-500"
+                }`}
+              />
               Election {stats.electionStatus}
             </span>
           </div>
@@ -176,7 +190,10 @@ const AdminDashboard = () => {
                 onClick={() => navigate("/admin/register-voter")}
                 className="p-8 border border-gray-200 hover:border-indigo-300 rounded-3xl text-left transition hover:shadow"
               >
-                <div className="text-4xl mb-4">👤</div>
+                <UserPlus
+                  className="w-9 h-9 mb-4 text-indigo-600"
+                  strokeWidth={1.75}
+                />
                 <h4 className="font-semibold">Register Voters</h4>
                 <p className="text-sm text-gray-600 mt-1">Single or Bulk</p>
               </button>
@@ -185,7 +202,10 @@ const AdminDashboard = () => {
                 onClick={() => navigate("/admin/generate-token")}
                 className="p-8 border border-gray-200 hover:border-indigo-300 rounded-3xl text-left transition hover:shadow"
               >
-                <div className="text-4xl mb-4">🔑</div>
+                <Ticket
+                  className="w-9 h-9 mb-4 text-indigo-600"
+                  strokeWidth={1.75}
+                />{" "}
                 <h4 className="font-semibold">Generate Tokens</h4>
                 <p className="text-sm text-gray-600 mt-1">For students</p>
               </button>
@@ -194,7 +214,10 @@ const AdminDashboard = () => {
                 onClick={() => navigate("/admin/list-voters")}
                 className="p-8 border border-gray-200 hover:border-indigo-300 rounded-3xl text-left transition hover:shadow"
               >
-                <div className="text-4xl mb-4"></div>
+                <Users
+                  className="w-9 h-9 mb-4 text-indigo-600"
+                  strokeWidth={1.75}
+                />{" "}
                 <h4 className="font-semibold">Manage Voters</h4>
               </button>
             </div>
