@@ -33,7 +33,7 @@ const ElectionSettings = () => {
   const fetchElectionSettings = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:3000/api/super/election-settings",
+        "http://localhost:3000/api/admin/election-settings",
         {
           headers: {
             Authorization: `Bearer ${authToken}`,

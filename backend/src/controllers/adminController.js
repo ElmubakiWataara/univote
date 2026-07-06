@@ -696,6 +696,64 @@ const getPublicElectionInfo = async (req, res) => {
   }
 };
 
+const getElectionSettings = async (req, res) => {
+  try {
+    let result = await pool.query(
+      `
+      SELECT
+        id,
+        title,
+        logo_url,
+        academic_year,
+        description,
+        is_active,
+        updated_by,
+        updated_at
+      FROM election_settings
+      WHERE id = 1
+      `,
+    );
+
+    if (result.rows.length === 0) {
+      await pool.query(
+        `
+        INSERT INTO election_settings
+        (
+          id,
+          is_active
+        )
+        VALUES
+        (
+          1,
+          FALSE
+        )
+        ON CONFLICT (id) DO NOTHING
+        `,
+      );
+
+      result = await pool.query(
+        `
+        SELECT *
+        FROM election_settings
+        WHERE id = 1
+        `,
+      );
+    }
+
+    res.json({
+      success: true,
+      settings: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Get election settings error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch election settings",
+    });
+  }
+};
+
 module.exports = {
   registerVoter,
   generateVoterToken,
@@ -709,4 +767,5 @@ module.exports = {
   getResults,
   bulkRegisterVoters,
   getPublicElectionInfo,
+  getElectionSettings,
 };

@@ -35,7 +35,7 @@ const AdminLayout = ({ children }) => {
         },
         {
           id: "list-voters",
-          label: "List of Voters",
+          label: "Manage Voters",
           path: "/admin/list-voters",
         },
       ],
@@ -93,7 +93,7 @@ const AdminLayout = ({ children }) => {
           {
             id: "election-config",
             label: "Election Config",
-            path: "/super/election-config",
+            path: "/admin/election-config",
           },
         ],
       },

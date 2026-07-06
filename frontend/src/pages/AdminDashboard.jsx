@@ -1,4 +1,3 @@
-// frontend/src/pages/AdminDashboard.jsx
 import { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
@@ -9,141 +8,196 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState({
     totalVoters: 0,
     votesCast: 0,
-    candidates: 0,
     electionStatus: "Closed",
+    electionTitle: "",
+    academicYear: "",
+    logoUrl: "",
   });
   const [loading, setLoading] = useState(true);
+  const [logsLoading, setLogsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [recentLogs, setRecentLogs] = useState([]);
 
   const { user, token: authToken } = useAuth();
   const navigate = useNavigate();
-  const isSuperAdmin = user?.role === "superadmin";
 
-  const fetchDashboardStats = async () => {
+  // Fetch all stats (used on initial load)
+  const fetchAdminData = async () => {
+    setLoading(true);
+    setError("");
+
     try {
-      const res = await Promise.allSettled([
+      const [votersRes, resultsRes, electionRes] = await Promise.allSettled([
         axios.get("http://localhost:3000/api/admin/voters", {
           headers: { Authorization: `Bearer ${authToken}` },
         }),
         axios.get("http://localhost:3000/api/admin/results", {
           headers: { Authorization: `Bearer ${authToken}` },
         }),
-        axios.get("http://localhost:3000/api/admin/candidates", {
+        axios.get("http://localhost:3000/api/admin/election-settings", {
           headers: { Authorization: `Bearer ${authToken}` },
         }),
       ]);
 
       setStats({
         totalVoters:
-          res[0].status === "fulfilled"
-            ? res[0].value.data.voters?.length || 0
+          votersRes.status === "fulfilled"
+            ? votersRes.value.data.voters?.length || 0
             : 0,
+
         votesCast:
-          res[1].status === "fulfilled"
-            ? res[1].value.data.total_votes || 0
+          resultsRes.status === "fulfilled"
+            ? resultsRes.value.data.total_votes || 0
             : 0,
-        candidates:
-          res[2].status === "fulfilled"
-            ? res[2].value.data.candidates?.length || 0
-            : 0,
-        electionStatus: "Unknown",
+
+        electionStatus:
+          electionRes.status === "fulfilled" &&
+          electionRes.value.data.settings?.is_active
+            ? "Active"
+            : "Closed",
+
+        electionTitle:
+          electionRes.status === "fulfilled"
+            ? electionRes.value.data.settings?.title || "Election"
+            : "Election",
+
+        academicYear:
+          electionRes.status === "fulfilled"
+            ? electionRes.value.data.settings?.academic_year || ""
+            : "",
+
+        logoUrl:
+          electionRes.status === "fulfilled"
+            ? electionRes.value.data.settings?.logo_url || ""
+            : "",
       });
     } catch (err) {
-      console.error("Dashboard fetch error:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Initial load
   useEffect(() => {
-    fetchDashboardStats();
+    fetchAdminData();
   }, []);
 
   return (
     <AdminLayout currentPage="dashboard">
-      <div className="space-y-10">
-        {/* Welcome Header */}
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900">
-            Welcome back, {user?.username}
-          </h1>
-          <p className="text-gray-600 mt-2 text-lg">
-            {isSuperAdmin ? "Super Administrator" : "Administrator"} •
-            University Voting System
-          </p>
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex justify-between items-center bg-white rounded-3xl shadow-sm p-4">
+          <div className="flex items-center gap-6">
+            {stats.logoUrl ? (
+              <img
+                src={
+                  stats.logoUrl.startsWith("/")
+                    ? stats.logoUrl
+                    : `/uploads${stats.logoUrl.startsWith("/") ? "" : "/"}${stats.logoUrl}`
+                }
+                alt="Election Logo"
+                className="w-20 h-20 rounded-2xl object-contain border"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://via.placeholder.com/80x80?text=Logo";
+                }}
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center text-4xl">
+                🗳️
+              </div>
+            )}
+
+            <div>
+              <h1 className="text-3xl font-bold">
+                {stats.electionTitle || "University Election"}
+              </h1>
+
+              <p className="text-gray-500 mt-1">{stats.academicYear}</p>
+
+              <p className="text-gray-500 mt-2">Admin Dashboard</p>
+            </div>
+          </div>
+
+          <div>
+            <span
+              className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold ${
+                stats.electionStatus === "Active"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              <span className="text-lg">
+                {stats.electionStatus === "Active" ? "🟢" : "🔴"}
+              </span>
+              Election {stats.electionStatus}
+            </span>
+          </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl">
+            {error}
+          </div>
+        )}
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+          <div className="bg-white rounded-3xl p-8 shadow-sm">
             <div className="text-sm text-gray-500">Total Voters</div>
-            <div className="text-5xl font-bold text-gray-900 mt-4">
+            <div className="text-5xl font-bold mt-4">
               {loading ? "—" : stats.totalVoters}
             </div>
           </div>
-
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-3xl p-8 shadow-sm">
             <div className="text-sm text-gray-500">Votes Cast</div>
-            <div className="text-5xl font-bold text-gray-900 mt-4">
+            <div className="text-5xl font-bold mt-4">
               {loading ? "—" : stats.votesCast}
             </div>
           </div>
-
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-            <div className="text-sm text-gray-500">Candidates</div>
-            <div className="text-5xl font-bold text-gray-900 mt-4">
-              {loading ? "—" : stats.candidates}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-            <div className="text-sm text-gray-500">Election Status</div>
-            <div className="mt-4">
-              <span
-                className={`inline-flex px-6 py-3 text-sm font-semibold rounded-3xl ${
-                  stats.electionStatus === "Active"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                ● {stats.electionStatus}
-              </span>
+          <div className="bg-white rounded-3xl p-8 shadow-sm">
+            <div className="text-sm text-gray-500">Turnout</div>
+            <div className="text-5xl font-bold mt-4">
+              {stats.totalVoters > 0
+                ? Math.round((stats.votesCast / stats.totalVoters) * 100)
+                : 0}
+              %
             </div>
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div
-            onClick={() => navigate("/admin/generate-token")}
-            className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:border-indigo-200 hover:shadow-md cursor-pointer transition group"
-          >
-            <div className="text-4xl mb-4 group-hover:scale-110 transition">
-              🔑
-            </div>
-            <h3 className="font-semibold text-xl">Generate Token</h3>
-            <p className="text-gray-600 mt-2">Create one-time voting tokens</p>
-          </div>
+        {/* Quick Actions & Logs */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-7 bg-white rounded-3xl shadow p-8">
+            <h3 className="font-semibold text-xl mb-6">Quick Actions</h3>
+            <div className="grid grid-cols-2 gap-6">
+              <button
+                onClick={() => navigate("/admin/register-voter")}
+                className="p-8 border border-gray-200 hover:border-indigo-300 rounded-3xl text-left transition hover:shadow"
+              >
+                <div className="text-4xl mb-4">👤</div>
+                <h4 className="font-semibold">Register Voters</h4>
+                <p className="text-sm text-gray-600 mt-1">Single or Bulk</p>
+              </button>
 
-          <div
-            onClick={() => navigate("/admin/register-voter")}
-            className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:border-indigo-200 hover:shadow-md cursor-pointer transition group"
-          >
-            <div className="text-4xl mb-4 group-hover:scale-110 transition">
-              👤
-            </div>
-            <h3 className="font-semibold text-xl">Register Voters</h3>
-            <p className="text-gray-600 mt-2">Single or bulk registration</p>
-          </div>
+              <button
+                onClick={() => navigate("/admin/generate-token")}
+                className="p-8 border border-gray-200 hover:border-indigo-300 rounded-3xl text-left transition hover:shadow"
+              >
+                <div className="text-4xl mb-4">🔑</div>
+                <h4 className="font-semibold">Generate Tokens</h4>
+                <p className="text-sm text-gray-600 mt-1">For students</p>
+              </button>
 
-          <div
-            onClick={() => navigate("/admin/list-candidates")}
-            className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:border-indigo-200 hover:shadow-md cursor-pointer transition group"
-          >
-            <div className="text-4xl mb-4 group-hover:scale-110 transition">
-              🏆
+              <button
+                onClick={() => navigate("/admin/list-voters")}
+                className="p-8 border border-gray-200 hover:border-indigo-300 rounded-3xl text-left transition hover:shadow"
+              >
+                <div className="text-4xl mb-4"></div>
+                <h4 className="font-semibold">Manage Voters</h4>
+              </button>
             </div>
-            <h3 className="font-semibold text-xl">Manage Candidates</h3>
-            <p className="text-gray-600 mt-2">Add, edit and view candidates</p>
           </div>
         </div>
       </div>

@@ -13,7 +13,7 @@ const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const voteRoutes = require("./routes/voteRoutes");
 const superAdminRoutes = require("./routes/superAdminRoutes");
-const publicRoutes = require("./routes/publicRoutes");
+const publicRoutes = require("./routes/publicRoute.s");
 
 const app = express();
 const PORT = process.env.PORT || 3000;

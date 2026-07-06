@@ -10,7 +10,7 @@ const {
   updateAdmin,
   deleteAdmin,
   createAdmin,
-  getElectionSettings,
+  // getElectionSettings,
   updateElectionConfig,
   toggleElection,
 } = require("../controllers/superAdminController");
@@ -25,7 +25,7 @@ router.put("/admins/:id", updateAdmin);
 router.delete("/admins/:id", deleteAdmin);
 
 router.post("/toggle-election", toggleElection);
-router.get("/election-settings", getElectionSettings);
+// router.get("/election-settings", getElectionSettings);
 router.post(
   "/update-election-config",
   uploadElectionLogo.single("logo"),

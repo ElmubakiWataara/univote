@@ -22,7 +22,6 @@ import AuditLogs from "./pages/AuditLogs";
 import ManageAdmins from "./pages/ManageAdmins";
 import ElectionConfig from "./pages/ElectionConfig";
 
-
 // Loading Spinner Component
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -156,7 +155,7 @@ function App() {
             }
           />
           <Route
-            path="/super/election-config"
+            path="/admin/election-config"
             element={
               <ProtectedRoute>
                 <ElectionConfig />

@@ -40,7 +40,7 @@ const SuperAdminDashboard = () => {
           axios.get("http://localhost:3000/api/admin/candidates", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get("http://localhost:3000/api/super/election-settings", {
+          axios.get("http://localhost:3000/api/admin/election-settings", {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
           axios.get("http://localhost:3000/api/super/admins", {
@@ -77,8 +77,8 @@ const SuperAdminDashboard = () => {
 
         electionTitle:
           electionRes.status === "fulfilled"
-            ? electionRes.value.data.settings?.title || "University Election"
-            : "University Election",
+            ? electionRes.value.data.settings?.title || "Election"
+            : "Election",
 
         academicYear:
           electionRes.status === "fulfilled"
