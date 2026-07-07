@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const ManageAdmins = () => {
   const [admins, setAdmins] = useState([]);
@@ -23,7 +24,7 @@ const ManageAdmins = () => {
   const fetchAdmins = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:3000/api/super/admins", {
+      const res = await axios.get(`${API_URL}/api/super/admins`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setAdmins(res.data.admins || []);
@@ -50,7 +51,7 @@ const ManageAdmins = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/super/create-admin",
+        `${API_URL}/api/super/create-admin`,
         formData,
         {
           headers: {
@@ -86,7 +87,7 @@ const ManageAdmins = () => {
     setSubmitting(true);
     try {
       const res = await axios.put(
-        `http://localhost:3000/api/super/admins/${editingAdmin.id}`,
+        `${API_URL}/api/super/admins/${editingAdmin.id}`,
         editForm,
         { headers: { Authorization: `Bearer ${authToken}` } },
       );
@@ -110,7 +111,7 @@ const ManageAdmins = () => {
       return;
 
     try {
-      await axios.delete(`http://localhost:3000/api/super/admins/${id}`, {
+      await axios.delete(`${API_URL}/api/super/admins/${id}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setSuccess(`Admin "${username}" deleted successfully`);

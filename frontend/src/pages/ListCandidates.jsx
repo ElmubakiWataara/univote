@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const ListCandidates = () => {
   const [candidates, setCandidates] = useState([]);
@@ -22,12 +23,9 @@ const ListCandidates = () => {
   const fetchCandidates = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        "http://localhost:3000/api/admin/candidates",
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        },
-      );
+      const res = await axios.get(`${API_URL}/api/admin/candidates`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       const sorted = (res.data.candidates || []).sort((a, b) =>
         a.position.localeCompare(b.position),
       );
@@ -67,7 +65,7 @@ const ListCandidates = () => {
     if (!window.confirm(`Delete candidate "${name}"?`)) return;
     setDeletingId(id);
     try {
-      await axios.delete(`http://localhost:3000/api/admin/candidates/${id}`, {
+      await axios.delete(`${API_URL}/api/admin/candidates/${id}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setCandidates(candidates.filter((c) => c.id !== id));
@@ -95,7 +93,7 @@ const ListCandidates = () => {
 
     try {
       const res = await axios.put(
-        `http://localhost:3000/api/admin/candidates/${editingCandidate.id}`,
+        `${API_URL}/api/admin/candidates/${editingCandidate.id}`,
         editForm,
         { headers: { Authorization: `Bearer ${authToken}` } },
       );

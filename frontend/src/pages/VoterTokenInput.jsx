@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const VoterTokenInput = () => {
   const [token, setToken] = useState("");
@@ -22,9 +23,7 @@ const VoterTokenInput = () => {
 
   const fetchElectionSettings = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:3000/api/public/election-info",
-      );
+      const res = await axios.get(`${API_URL}/api/public/election-info`);
 
       if (res.data.success) {
         const logoUrl = res.data.election.logo_url || "";
@@ -45,10 +44,9 @@ const VoterTokenInput = () => {
     setError("");
 
     try {
-      const res = await axios.post(
-        "http://localhost:3000/api/auth/verify-token",
-        { token },
-      );
+      const res = await axios.post(`${API_URL}/api/auth/verify-token`, {
+        token,
+      });
 
       if (res.data.success) {
         login(res.data.token, res.data.voter);

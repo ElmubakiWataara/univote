@@ -2,6 +2,7 @@ import { useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const AddCandidate = () => {
   const [formData, setFormData] = useState({
@@ -42,15 +43,11 @@ const AddCandidate = () => {
       if (formData.bio) form.append("bio", formData.bio);
       if (photo) form.append("photo", photo);
 
-      const res = await axios.post(
-        "http://localhost:3000/api/admin/candidates",
-        form,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
+      const res = await axios.post(`${API_URL}/api/admin/candidates`, form, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
         },
-      );
+      });
 
       setSuccess(`Candidate "${res.data.candidate.name}" added successfully!`);
       setFormData({ name: "", position: "", yes_or_no: "", bio: "" });

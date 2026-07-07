@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const VotingPage = () => {
   const [positions, setPositions] = useState([]);
@@ -46,7 +47,7 @@ const VotingPage = () => {
 
   const loadCandidates = async () => {
     try {
-      const res = await axios.get("http://localhost:3000/api/vote/candidates", {
+      const res = await axios.get(`${API_URL}/api/vote/candidates`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -111,7 +112,6 @@ const VotingPage = () => {
     }
   };
 
-  // ==================== UPDATED SUBMISSION LOGIC ====================
   const handleSubmitAllVotes = async () => {
     if (submitting) return;
     setSubmitting(true);
@@ -139,7 +139,7 @@ const VotingPage = () => {
 
       // Call new submitBallot endpoint
       const res = await axios.post(
-        "http://localhost:3000/api/vote/submit-ballot",
+        `${API_URL}/api/vote/submit-ballot`,
         { votes: votesPayload },
         { headers: { Authorization: `Bearer ${token}` } },
       );

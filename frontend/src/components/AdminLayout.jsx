@@ -79,7 +79,8 @@ const AdminLayout = ({ children }) => {
             path: "/admin/audit-logs",
           },
         ],
-
+      },
+      {
         id: "settings",
         label: "Settings",
         icon: "",

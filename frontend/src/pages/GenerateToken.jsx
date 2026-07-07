@@ -3,6 +3,7 @@ import { useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const GenerateToken = () => {
   const [studentId, setStudentId] = useState("");
@@ -24,7 +25,7 @@ const GenerateToken = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/admin/generate-token",
+        `${API_URL}/api/admin/generate-token`,
         { student_id: studentId.trim().toUpperCase() },
         { headers: { Authorization: `Bearer ${authToken}` } },
       );

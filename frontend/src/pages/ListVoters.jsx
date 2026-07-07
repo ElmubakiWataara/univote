@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const ListVoters = () => {
   const [voters, setVoters] = useState([]);
@@ -21,7 +22,7 @@ const ListVoters = () => {
   const fetchVoters = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:3000/api/admin/voters", {
+      const res = await axios.get(`${API_URL}/api/admin/voters`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setVoters(res.data.voters || []);
@@ -43,7 +44,7 @@ const ListVoters = () => {
 
     setDeletingId(id);
     try {
-      await axios.delete(`http://localhost:3000/api/admin/voters/${id}`, {
+      await axios.delete(`${API_URL}/api/admin/voters/${id}`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
 
@@ -72,7 +73,7 @@ const ListVoters = () => {
 
     try {
       const res = await axios.put(
-        `http://localhost:3000/api/admin/voters/${editingVoter.id}`,
+        `${API_URL}/api/admin/voters/${editingVoter.id}`,
         editForm,
         { headers: { Authorization: `Bearer ${authToken}` } },
       );

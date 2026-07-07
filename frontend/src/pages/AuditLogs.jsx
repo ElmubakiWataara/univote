@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const AuditLogs = () => {
   const [logs, setLogs] = useState([]);
@@ -15,12 +16,9 @@ const AuditLogs = () => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        "http://localhost:3000/api/super/audit-logs?limit=200",
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        },
-      );
+      const res = await axios.get(`${API_URL}/api/super/audit-logs?limit=200`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       setLogs(res.data.logs || []);
     } catch (err) {
       setError("Failed to load audit logs");

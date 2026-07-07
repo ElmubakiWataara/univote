@@ -3,6 +3,8 @@ import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import API_URL from "../config/api";
+
 //for icons
 import {
   UserPlus,
@@ -38,13 +40,13 @@ const AdminDashboard = () => {
 
     try {
       const [votersRes, resultsRes, electionRes] = await Promise.allSettled([
-        axios.get("http://localhost:3000/api/admin/voters", {
+        axios.get(`${API_URL}/api/admin/voters`, {
           headers: { Authorization: `Bearer ${authToken}` },
         }),
-        axios.get("http://localhost:3000/api/admin/results", {
+        axios.get(`${API_URL}/api/admin/results`, {
           headers: { Authorization: `Bearer ${authToken}` },
         }),
-        axios.get("http://localhost:3000/api/admin/election-settings", {
+        axios.get(`${API_URL}/api/admin/election-settings`, {
           headers: { Authorization: `Bearer ${authToken}` },
         }),
       ]);

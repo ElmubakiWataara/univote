@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Circle,
 } from "lucide-react";
+import API_URL from "../config/api";
 
 const SuperAdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -40,19 +41,19 @@ const SuperAdminDashboard = () => {
     try {
       const [votersRes, resultsRes, candidatesRes, electionRes, adminsRes] =
         await Promise.allSettled([
-          axios.get("http://localhost:3000/api/admin/voters", {
+          axios.get(`${API_URL}/api/admin/voters`, {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get("http://localhost:3000/api/admin/results", {
+          axios.get(`${API_URL}/api/admin/results`, {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get("http://localhost:3000/api/admin/candidates", {
+          axios.get(`${API_URL}/api/admin/candidates`, {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get("http://localhost:3000/api/admin/election-settings", {
+          axios.get(`${API_URL}/api/admin/election-settings`, {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get("http://localhost:3000/api/super/admins", {
+          axios.get(`${API_URL}/api/super/admins`, {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
         ]);
@@ -111,7 +112,7 @@ const SuperAdminDashboard = () => {
     setLogsLoading(true);
     try {
       const logsRes = await axios.get(
-        "http://localhost:3000/api/super/audit-logs?limit=8",
+        `${API_URL}/api/super/audit-logs?limit=8`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
         },

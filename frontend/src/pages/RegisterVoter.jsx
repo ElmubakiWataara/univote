@@ -3,6 +3,7 @@ import { useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const RegisterVoter = () => {
   // Single Registration
@@ -32,7 +33,7 @@ const RegisterVoter = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/admin/register-voter",
+        `${API_URL}/api/admin/register-voter`,
         formData,
         { headers: { Authorization: `Bearer ${authToken}` } },
       );
@@ -58,11 +59,9 @@ const RegisterVoter = () => {
     form.append("file", bulkFile);
 
     try {
-      const res = await axios.post(
-        "http://localhost:3000/api/admin/voters/bulk",
-        form,
-        { headers: { Authorization: `Bearer ${authToken}` } },
-      );
+      const res = await axios.post(`${API_URL}/api/admin/voters/bulk`, form, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
 
       setBulkResult(res.data);
       setBulkFile(null); // Reset file input

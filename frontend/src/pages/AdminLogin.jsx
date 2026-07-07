@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const AdminLogin = () => {
   const [username, setUsername] = useState("");
@@ -18,10 +19,10 @@ const AdminLogin = () => {
     setError("");
 
     try {
-      const res = await axios.post(
-        "http://localhost:3000/api/auth/admin-login",
-        { username, password },
-      );
+      const res = await axios.post(`${API_URL}/api/auth/admin-login`, {
+        username,
+        password,
+      });
 
       if (res.data.success) {
         login(res.data.token, res.data.user);

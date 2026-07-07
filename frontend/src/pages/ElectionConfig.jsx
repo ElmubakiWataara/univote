@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import AdminLayout from "../components/AdminLayout";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const ElectionSettings = () => {
   const { token: authToken } = useAuth();
@@ -32,14 +33,11 @@ const ElectionSettings = () => {
 
   const fetchElectionSettings = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:3000/api/admin/election-settings",
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
+      const res = await axios.get(`${API_URL}/api/admin/election-settings`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
         },
-      );
+      });
 
       const settings = res.data.settings;
 
@@ -74,7 +72,7 @@ const ElectionSettings = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:3000/api/super/toggle-election",
+        `${API_URL}/api/super/toggle-election`,
         {
           is_active: !electionStatus,
         },
@@ -126,7 +124,7 @@ const ElectionSettings = () => {
       }
 
       await axios.post(
-        "http://localhost:3000/api/super/update-election-config",
+        `${API_URL}/api/super/update-election-config`,
         formData,
         {
           headers: {

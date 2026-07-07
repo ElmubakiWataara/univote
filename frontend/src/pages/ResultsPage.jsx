@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import autoTable from "jspdf-autotable";
+import API_URL from "../config/api";
 
 const ResultsPage = () => {
   const [results, setResults] = useState({});
@@ -20,7 +21,7 @@ const ResultsPage = () => {
   const fetchResults = async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:3000/api/admin/results", {
+      const res = await axios.get(`${API_URL}/api/admin/results`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
 

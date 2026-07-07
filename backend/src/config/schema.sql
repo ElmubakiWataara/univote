@@ -1,4 +1,3 @@
--- backend/src/config/schema.sql
 
 -- Admins
 CREATE TABLE IF NOT EXISTS admins (
