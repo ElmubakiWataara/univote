@@ -1,7 +1,23 @@
-// frontend/src/components/AdminLayout.jsx
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+//for icons
+import {
+  LayoutDashboard,
+  UserPlus,
+  Ticket,
+  Users,
+  UserCog,
+  ListChecks,
+  BarChart3,
+  ScrollText,
+  Settings,
+  ShieldCheck,
+  Vote,
+  User,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 const AdminLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -15,28 +31,31 @@ const AdminLayout = ({ children }) => {
     {
       id: "dashboard",
       label: "Dashboard",
-      icon: "",
+      icon: LayoutDashboard,
       path: isSuperAdmin ? "/admin/super" : "/admin/dashboard",
     },
     {
       id: "voters",
       label: "Manage Voters",
-      icon: "",
+      icon: Users,
       submenu: [
         {
           id: "register-voter",
           label: "Register Voters",
           path: "/admin/register-voter",
+          icon: UserPlus,
         },
         {
           id: "generate-token",
           label: "Generate Tokens",
           path: "/admin/generate-token",
+          icon: Ticket,
         },
         {
           id: "list-voters",
           label: "Manage Voters",
           path: "/admin/list-voters",
+          icon: Users,
         },
       ],
     },
@@ -47,17 +66,19 @@ const AdminLayout = ({ children }) => {
       {
         id: "candidates",
         label: "Manage Candidates",
-        icon: "",
+        icon: UserCog,
         submenu: [
           {
             id: "add-candidate",
             label: "Add Candidate",
             path: "/admin/add-candidate",
+            icon: UserPlus,
           },
           {
             id: "list-candidates",
             label: "List of Candidates",
             path: "/admin/list-candidates",
+            icon: ListChecks,
           },
         ],
       },
@@ -65,36 +86,39 @@ const AdminLayout = ({ children }) => {
       {
         id: "results",
         label: "Results",
-        icon: "",
+        icon: BarChart3,
         submenu: [
           {
             id: "results",
             label: "Results",
             path: "/admin/results",
+            icon: BarChart3,
           },
-          ,
           {
             id: "audit-logs",
             label: "Audit Logs",
             path: "/admin/audit-logs",
+            icon: ScrollText,
           },
         ],
       },
       {
         id: "settings",
         label: "Settings",
-        icon: "",
+        icon: Settings,
         // path: "/admin/settings",
         submenu: [
           {
             id: "manage-admins",
             label: "Manage Admins",
             path: "/super/manage-admins",
+            icon: ShieldCheck,
           },
           {
             id: "election-config",
             label: "Election Config",
             path: "/admin/election-config",
+            icon: Vote,
           },
         ],
       },
@@ -111,7 +135,9 @@ const AdminLayout = ({ children }) => {
       >
         {/* Logo */}
         <div className="p-6 flex items-center gap-3 border-b border-white/10">
-          <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center text-2xl"></div>
+          <div className="w-10 h-10 bg-white/10 rounded-2xl flex items-center justify-center">
+            <Vote className="w-5 h-5 text-white" strokeWidth={1.75} />
+          </div>
           {sidebarOpen && (
             <span className="font-bold text-2xl tracking-tight">
               Esofa Votes
@@ -121,46 +147,62 @@ const AdminLayout = ({ children }) => {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 overflow-y-auto">
-          {navItems.map((item) => (
-            <div key={item.id} className="mb-2">
-              {item.path ? (
-                <button
-                  onClick={() => navigate(item.path)}
-                  className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all hover:bg-white/10 ${isActive(item.path) ? "bg-white/15 font-medium" : ""}`}
-                >
-                  <span className="text-xl">{item.icon}</span>
-                  {sidebarOpen && <span>{item.label}</span>}
-                </button>
-              ) : (
-                <div className="px-5 py-3 text-white/70 font-medium flex items-center gap-3">
-                  <span className="text-xl">{item.icon}</span>
-                  {sidebarOpen && item.label}
-                </div>
-              )}
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <div key={item.id} className="mb-2">
+                {item.path ? (
+                  <button
+                    onClick={() => navigate(item.path)}
+                    className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all hover:bg-white/10 ${isActive(item.path) ? "bg-white/15 font-medium" : ""}`}
+                  >
+                    {Icon && (
+                      <Icon className="w-5 h-5 shrink-0" strokeWidth={1.75} />
+                    )}
+                    {sidebarOpen && <span>{item.label}</span>}
+                  </button>
+                ) : (
+                  <div className="px-5 py-3 text-white/70 font-medium flex items-center gap-3">
+                    {Icon && (
+                      <Icon className="w-5 h-5 shrink-0" strokeWidth={1.75} />
+                    )}
+                    {sidebarOpen && item.label}
+                  </div>
+                )}
 
-              {/* Submenu */}
-              {sidebarOpen && item.submenu && (
-                <div className="ml-9 mt-1 space-y-1">
-                  {item.submenu.map((sub) => (
-                    <button
-                      key={sub.id}
-                      onClick={() => navigate(sub.path)}
-                      className={`w-full text-left px-5 py-2.5 text-sm rounded-xl transition-all hover:bg-white/10 ${isActive(sub.path) ? "bg-white/15 text-white" : "text-white/80"}`}
-                    >
-                      {sub.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+                {/* Submenu */}
+                {sidebarOpen && item.submenu && (
+                  <div className="ml-9 mt-1 space-y-1">
+                    {item.submenu.map((sub) => {
+                      const SubIcon = sub.icon;
+                      return (
+                        <button
+                          key={sub.id}
+                          onClick={() => navigate(sub.path)}
+                          className={`w-full flex items-center gap-2.5 text-left px-5 py-2.5 text-sm rounded-xl transition-all hover:bg-white/10 ${isActive(sub.path) ? "bg-white/15 text-white" : "text-white/80"}`}
+                        >
+                          {SubIcon && (
+                            <SubIcon
+                              className="w-4 h-4 shrink-0"
+                              strokeWidth={1.75}
+                            />
+                          )}
+                          <span>{sub.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         {/* Bottom Section */}
         <div className="p-6 border-t border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-white/20 rounded-2xl flex items-center justify-center text-xl">
-              👤
+            <div className="w-9 h-9 bg-white/20 rounded-2xl flex items-center justify-center">
+              <User className="w-5 h-5 text-white" strokeWidth={1.75} />
             </div>
             {sidebarOpen && (
               <div className="flex-1 min-w-0">
@@ -193,9 +235,11 @@ const AdminLayout = ({ children }) => {
               active:scale-95
             "
           >
-            <span className="text-lg font-semibold transition-transform duration-300">
-              {sidebarOpen ? "❮" : "❯"}
-            </span>
+            {sidebarOpen ? (
+              <ChevronLeft className="w-5 h-5" strokeWidth={2} />
+            ) : (
+              <ChevronRight className="w-5 h-5" strokeWidth={2} />
+            )}
           </button>
 
           <div className="flex items-center gap-6">

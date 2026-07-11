@@ -298,7 +298,7 @@ const ResultsPage = () => {
                   <CandidateImage
                     photo_url={selectedCandidate.photo_url}
                     name={selectedCandidate.name}
-                    size="64"
+                    size="24"
                   />
                 </div>
 
