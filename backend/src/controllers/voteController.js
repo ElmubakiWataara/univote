@@ -1,4 +1,3 @@
-// backend/src/controllers/voteController.js
 const pool = require("../config/db");
 
 // Submit Complete Ballot (Scoped)

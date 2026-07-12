@@ -1,7 +1,15 @@
 const pool = require("../config/db");
 
 const getPublicElectionInfo = async (req, res) => {
-  const organizationId = req.user.organization_id;
+  const organizationId = req.query.organization_id || req.user?.organization_id;
+
+  if (!organizationId) {
+    return res.status(400).json({
+      success: false,
+      message: "Organization ID is required",
+    });
+  }
+
   try {
     const result = await pool.query(
       `
@@ -12,8 +20,9 @@ const getPublicElectionInfo = async (req, res) => {
         description,
         is_active
       FROM election_settings
-      WHERE id = 1
+      WHERE organization_id = $1
       `,
+      [organizationId],
     );
 
     if (result.rows.length === 0) {
@@ -29,7 +38,6 @@ const getPublicElectionInfo = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-
     res.status(500).json({
       success: false,
       message: "Failed to fetch election information",

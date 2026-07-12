@@ -11,14 +11,15 @@ const updateVoter = async (req, res) => {
   const { id } = req.params;
   let { student_id, full_name, department, email } = req.body;
   const adminId = req.user.id;
-  const organizationId = req.user.organization_id;
+  const organizationId = req.user.organization_id; // From JWT
 
   try {
-    // Check current voter status
+    // Check current voter status (scoped)
     const current = await pool.query(
-      "SELECT has_voted FROM voters WHERE id = $1",
-      [id],
+      "SELECT has_voted FROM voters WHERE id = $1 AND organization_id = $2",
+      [id, organizationId],
     );
+
     const hasVoted = current.rows[0]?.has_voted;
 
     // Validation
@@ -51,8 +52,8 @@ const updateVoter = async (req, res) => {
       params.push(student_id);
     }
 
-    query += ` WHERE id = $${params.length + 1} RETURNING *`;
-    params.push(id);
+    query += ` WHERE id = $${params.length + 1} AND organization_id = $${params.length + 2} RETURNING *`;
+    params.push(id, organizationId);
 
     const result = await pool.query(query, params);
 
@@ -65,10 +66,16 @@ const updateVoter = async (req, res) => {
     // Audit log
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
+      VALUES ($1, $2, $3, $4, $5)
     `,
-      ["VOTER_UPDATED", adminId, req.user.role, { voter_id: id, full_name }],
+      [
+        "VOTER_UPDATED",
+        adminId,
+        req.user.role,
+        { voter_id: id, full_name },
+        organizationId,
+      ],
     );
 
     res.json({
@@ -82,17 +89,19 @@ const updateVoter = async (req, res) => {
   }
 };
 
+// Delete Voter (Scoped)
 const deleteVoter = async (req, res) => {
   const { id } = req.params;
   const adminId = req.user.id;
   const organizationId = req.user.organization_id;
 
   try {
-    // Check if voter has voted
+    // Check if voter has voted (scoped)
     const check = await pool.query(
-      "SELECT has_voted FROM voters WHERE id = $1",
-      [id],
+      "SELECT has_voted FROM voters WHERE id = $1 AND organization_id = $2",
+      [id, organizationId],
     );
+
     if (check.rows[0]?.has_voted) {
       return res.status(400).json({
         success: false,
@@ -100,15 +109,24 @@ const deleteVoter = async (req, res) => {
       });
     }
 
-    await pool.query("DELETE FROM voters WHERE id = $1", [id]);
+    await pool.query(
+      "DELETE FROM voters WHERE id = $1 AND organization_id = $2",
+      [id, organizationId],
+    );
 
     // Audit log
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
+      VALUES ($1, $2, $3, $4, $5)
     `,
-      ["VOTER_DELETED", adminId, req.user.role, { voter_id: id }],
+      [
+        "VOTER_DELETED",
+        adminId,
+        req.user.role,
+        { voter_id: id },
+        organizationId,
+      ],
     );
 
     res.json({ success: true, message: "Voter deleted successfully" });
@@ -117,6 +135,8 @@ const deleteVoter = async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to delete voter" });
   }
 };
+
+// Register Voter (Scoped)
 const registerVoter = async (req, res) => {
   let { student_id, full_name, department, email } = req.body;
   const adminId = req.user.id;
@@ -151,28 +171,34 @@ const registerVoter = async (req, res) => {
   try {
     const result = await pool.query(
       `
-      INSERT INTO voters (student_id, full_name, department, email)
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (student_id) DO NOTHING
+      INSERT INTO voters (student_id, full_name, department, email, organization_id)
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (organization_id, student_id) DO NOTHING
       RETURNING id, student_id, full_name
     `,
-      [student_id, full_name, department, email],
+      [student_id, full_name, department, email, organizationId],
     );
 
     if (result.rows.length === 0) {
       return res.status(409).json({
         success: false,
-        message: "Student ID already exists",
+        message: "Student ID already exists in this organization",
       });
     }
 
     // Audit log
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
+      VALUES ($1, $2, $3, $4, $5)
     `,
-      ["VOTER_REGISTERED", adminId, req.user.role, { student_id, full_name }],
+      [
+        "VOTER_REGISTERED",
+        adminId,
+        req.user.role,
+        { student_id, full_name },
+        organizationId,
+      ],
     );
 
     res.json({
@@ -191,8 +217,8 @@ const registerVoter = async (req, res) => {
 //bulk upload and registration
 const bulkRegisterVoters = async (req, res) => {
   const adminId = req.user.id;
-  const file = req.file;
   const organizationId = req.user.organization_id;
+  const file = req.file;
 
   if (!file) {
     return res
@@ -239,12 +265,12 @@ const bulkRegisterVoters = async (req, res) => {
 
             const dbResult = await pool.query(
               `
-              INSERT INTO voters (student_id, full_name, department, email)
-              VALUES ($1, $2, $3, $4)
-              ON CONFLICT (student_id) DO NOTHING
+              INSERT INTO voters (student_id, full_name, department, email, organization_id)
+              VALUES ($1, $2, $3, $4, $5)
+              ON CONFLICT (organization_id, student_id) DO NOTHING
               RETURNING id, student_id, full_name
             `,
-              [student_id, full_name, department, email],
+              [student_id, full_name, department, email, organizationId],
             );
 
             if (dbResult.rows.length > 0) successCount++;
@@ -257,8 +283,8 @@ const bulkRegisterVoters = async (req, res) => {
         // Audit log for bulk action
         await pool.query(
           `
-          INSERT INTO audit_logs (action, actor_id, actor_role, details)
-          VALUES ($1, $2, $3, $4)
+          INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
+          VALUES ($1, $2, $3, $4, $5)
         `,
           [
             "BULK_VOTER_REGISTERED",
@@ -269,6 +295,7 @@ const bulkRegisterVoters = async (req, res) => {
               success: successCount,
               failed: errors.length,
             },
+            organizationId,
           ],
         );
 
@@ -293,21 +320,27 @@ const bulkRegisterVoters = async (req, res) => {
 
 const getCandidates = async (req, res) => {
   const organizationId = req.user.organization_id;
+
   try {
-    const result = await pool.query(`
+    const result = await pool.query(
+      `
       SELECT id, name, position, bio, photo_url, yes_or_no
       FROM candidates 
+      WHERE organization_id = $1
       ORDER BY position, name
-    `);
+    `,
+      [organizationId],
+    );
+
     res.json({ success: true, candidates: result.rows });
   } catch (error) {
+    console.error(error);
     res
       .status(500)
       .json({ success: false, message: "Failed to fetch candidates" });
   }
 };
 
-// Add this function (or replace the existing one)
 const addCandidate = async (req, res) => {
   let { name, position, bio, yes_or_no } = req.body;
   const adminId = req.user.id;
@@ -321,8 +354,8 @@ const addCandidate = async (req, res) => {
   }
 
   // Normalize inputs
-  name = toTitleCase(name.trim()); // Title Case for name
-  position = position.trim().toUpperCase(); // ALL CAPS for position
+  name = toTitleCase(name.trim());
+  position = position.trim().toUpperCase();
   bio = bio ? bio.trim() : null;
   yes_or_no = yes_or_no ? yes_or_no.trim().toUpperCase() : null;
 
@@ -331,24 +364,25 @@ const addCandidate = async (req, res) => {
 
     const result = await pool.query(
       `
-      INSERT INTO candidates (name, position, bio, photo_url, yes_or_no)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO candidates (name, position, bio, photo_url, yes_or_no, organization_id)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING id, name, position, bio, photo_url, yes_or_no 
     `,
-      [name, position, bio, photoUrl, yes_or_no],
+      [name, position, bio, photoUrl, yes_or_no, organizationId],
     );
 
     // Audit log
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
+      VALUES ($1, $2, $3, $4, $5)
     `,
       [
         "CANDIDATE_ADDED",
         adminId,
         req.user.role,
         { name, position, yes_or_no: yes_or_no },
+        organizationId,
       ],
     );
 
@@ -367,9 +401,10 @@ const addCandidate = async (req, res) => {
 };
 
 //Update candidate
+// Update Candidate (Scoped)
 const updateCandidate = async (req, res) => {
   const { id } = req.params;
-  let { name, position, bio, yes_or_no } = req.body; // Note: yes_or_no from frontend
+  let { name, position, bio, yes_or_no } = req.body;
   const adminId = req.user.id;
   const organizationId = req.user.organization_id;
 
@@ -380,10 +415,10 @@ const updateCandidate = async (req, res) => {
     });
   }
 
-  // Check votes
+  // Check votes (scoped)
   const voteCheck = await pool.query(
-    "SELECT COUNT(*) as vote_count FROM votes WHERE candidate_id = $1",
-    [id],
+    "SELECT COUNT(*) as vote_count FROM votes WHERE candidate_id = $1 AND organization_id = $2",
+    [id, organizationId],
   );
 
   if (parseInt(voteCheck.rows[0].vote_count) > 0) {
@@ -407,10 +442,10 @@ const updateCandidate = async (req, res) => {
           position = $2, 
           bio = $3, 
           yes_or_no = $4
-      WHERE id = $5
+      WHERE id = $5 AND organization_id = $6
       RETURNING id, name, position, bio, photo_url, yes_or_no
     `,
-      [name, position, bio, yesOrNoValue, id],
+      [name, position, bio, yesOrNoValue, id, organizationId],
     );
 
     if (result.rows.length === 0) {
@@ -421,13 +456,16 @@ const updateCandidate = async (req, res) => {
 
     // Audit log
     await pool.query(
-      `INSERT INTO audit_logs (action, actor_id, actor_role, details)
-       VALUES ($1, $2, $3, $4)`,
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
+      VALUES ($1, $2, $3, $4, $5)
+      `,
       [
         "CANDIDATE_UPDATED",
         adminId,
         req.user.role,
         { candidate_id: id, name, position, yes_or_no: yesOrNoValue },
+        organizationId,
       ],
     );
 
@@ -444,17 +482,17 @@ const updateCandidate = async (req, res) => {
   }
 };
 
-//Delete Candidate
+// Delete Candidate (Scoped)
 const deleteCandidate = async (req, res) => {
   const { id } = req.params;
   const adminId = req.user.id;
   const organizationId = req.user.organization_id;
 
   try {
-    // Check if candidate has any votes
+    // Check if candidate has any votes (scoped)
     const voteCheck = await pool.query(
-      "SELECT COUNT(*) as vote_count FROM votes WHERE candidate_id = $1",
-      [id],
+      "SELECT COUNT(*) as vote_count FROM votes WHERE candidate_id = $1 AND organization_id = $2",
+      [id, organizationId],
     );
 
     if (parseInt(voteCheck.rows[0].vote_count) > 0) {
@@ -466,8 +504,8 @@ const deleteCandidate = async (req, res) => {
     }
 
     const result = await pool.query(
-      "DELETE FROM candidates WHERE id = $1 RETURNING name",
-      [id],
+      "DELETE FROM candidates WHERE id = $1 AND organization_id = $2 RETURNING name",
+      [id, organizationId],
     );
 
     if (result.rows.length === 0) {
@@ -479,14 +517,15 @@ const deleteCandidate = async (req, res) => {
     // Audit log
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
+      VALUES ($1, $2, $3, $4, $5)
     `,
       [
         "CANDIDATE_DELETED",
         adminId,
         req.user.role,
         { candidate_id: id, name: result.rows[0].name },
+        organizationId,
       ],
     );
 
@@ -502,6 +541,7 @@ const deleteCandidate = async (req, res) => {
   }
 };
 
+// Generate Voter Token (Scoped)
 const generateVoterToken = async (req, res) => {
   const { student_id } = req.body;
   const adminId = req.user.id;
@@ -516,9 +556,10 @@ const generateVoterToken = async (req, res) => {
   }
 
   try {
-    // 1. Check if election is active
+    // 1. Check if election is active for this organization
     const electionCheck = await pool.query(
-      "SELECT is_active FROM election_settings LIMIT 1",
+      "SELECT is_active FROM election_settings WHERE organization_id = $1",
+      [organizationId],
     );
 
     if (!electionCheck.rows[0]?.is_active) {
@@ -528,12 +569,12 @@ const generateVoterToken = async (req, res) => {
       });
     }
 
-    // 2. Check if voter exists and hasn't voted yet
+    // 2. Check if voter exists and hasn't voted yet (scoped)
     const voterResult = await pool.query(
       `SELECT id, full_name, has_voted 
        FROM voters 
-       WHERE student_id = $1`,
-      [student_id],
+       WHERE student_id = $1 AND organization_id = $2`,
+      [student_id, organizationId],
     );
 
     if (voterResult.rows.length === 0) {
@@ -552,7 +593,6 @@ const generateVoterToken = async (req, res) => {
       });
     }
 
-    // const tokenValue = crypto.randomBytes(32).toString("hex");
     // Generate 6-Character Token
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     const randomBytes = crypto.randomBytes(6);
@@ -562,24 +602,24 @@ const generateVoterToken = async (req, res) => {
       tokenValue += chars.charAt(randomBytes[i] % chars.length);
     }
 
-    // 4. Set 15 minutes expiry
+    // Set 15 minutes expiry
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    // 5. Save token to database
+    // Save token
     const tokenInsert = await pool.query(
       `
-      INSERT INTO tokens (voter_id, token_value, generated_by, expires_at)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO tokens (voter_id, token_value, generated_by, expires_at, organization_id)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING id, token_value, expires_at
     `,
-      [voter.id, tokenValue, adminId, expiresAt],
+      [voter.id, tokenValue, adminId, expiresAt, organizationId],
     );
 
-    // 6. Log this action
+    // Audit log
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
+      VALUES ($1, $2, $3, $4, $5)
     `,
       [
         "TOKEN_GENERATED",
@@ -591,16 +631,16 @@ const generateVoterToken = async (req, res) => {
           token_id: tokenInsert.rows[0].id,
           token_value: tokenValue,
         },
+        organizationId,
       ],
     );
 
-    // 7. Return token to admin
     res.json({
       success: true,
       message:
         "Token generated successfully. Please write it down and give to the student.",
       token: tokenValue,
-      expires_in: 900, // 15 minutes
+      expires_in: 900,
       voter_name: voter.full_name,
       student_id: student_id,
     });
@@ -617,11 +657,15 @@ const generateVoterToken = async (req, res) => {
 const getAllVoters = async (req, res) => {
   const organizationId = req.user.organization_id;
   try {
-    const result = await pool.query(`
+    const result = await pool.query(
+      `
       SELECT id, student_id, full_name, department, has_voted, created_at 
       FROM voters 
+      WHERE organization_id = $1
       ORDER BY created_at DESC
-    `);
+    `,
+      [organizationId],
+    );
 
     res.json({
       success: true,
@@ -635,20 +679,25 @@ const getAllVoters = async (req, res) => {
 };
 
 const getResults = async (req, res) => {
+  const organizationId = req.user.organization_id;
   try {
-    const result = await pool.query(`
+    const result = await pool.query(
+      `
       SELECT 
         c.position,
         c.name as candidate_name,
         c.photo_url,
         c.yes_or_no,
         COUNT(v.id) as votes,
-        ROUND(COUNT(v.id) * 100.0 / NULLIF((SELECT COUNT(*) FROM votes), 0), 2) as percentage
+        ROUND(COUNT(v.id) * 100.0 / NULLIF((SELECT COUNT(*) FROM votes WHERE organization_id = $1), 0), 2) as percentage
       FROM candidates c
       LEFT JOIN votes v ON c.id = v.candidate_id
+      WHERE c.organization_id = $1
       GROUP BY c.position, c.id, c.name, c.photo_url
       ORDER BY c.position, votes DESC
-    `);
+    `,
+      [organizationId],
+    );
 
     // Group by position
     const grouped = result.rows.reduce((acc, row) => {
@@ -665,7 +714,10 @@ const getResults = async (req, res) => {
       return acc;
     }, {});
 
-    const totalVotes = await pool.query("SELECT COUNT(*) as total FROM votes");
+    const totalVotes = await pool.query(
+      "SELECT COUNT(*) as total FROM votes WHERE organization_id = $1",
+      [organizationId],
+    );
 
     res.json({
       success: true,
@@ -680,23 +732,26 @@ const getResults = async (req, res) => {
   }
 };
 
-//basic information
+// Public Election Info (for voter side)
 const getPublicElectionInfo = async (req, res) => {
-  const organizationId = req.user.organization_id;
+  const organizationId = req.user.organization_id; // or from request if public
   try {
-    const result = await pool.query(`
+    const result = await pool.query(
+      `
       SELECT
         title,
         logo_url,
         academic_year,
         is_active
       FROM election_settings
-      WHERE id = 1
-    `);
+      WHERE organization_id = $1
+    `,
+      [organizationId],
+    );
 
     res.json({
       success: true,
-      election: result.rows[0],
+      election: result.rows[0] || {},
     });
   } catch (err) {
     res.status(500).json({
@@ -721,33 +776,28 @@ const getElectionSettings = async (req, res) => {
         updated_by,
         updated_at
       FROM election_settings
-      WHERE id = 1
+      WHERE organization_id = $1
       `,
+      [organizationId],
     );
 
     if (result.rows.length === 0) {
       await pool.query(
         `
-        INSERT INTO election_settings
-        (
-          id,
-          is_active
-        )
-        VALUES
-        (
-          1,
-          FALSE
-        )
-        ON CONFLICT (id) DO NOTHING
+        INSERT INTO election_settings (organization_id)
+        VALUES ($1)
+        ON CONFLICT (organization_id) DO NOTHING
         `,
+        [organizationId],
       );
 
       result = await pool.query(
         `
         SELECT *
         FROM election_settings
-        WHERE id = 1
+        WHERE organization_id = $1
         `,
+        [organizationId],
       );
     }
 
@@ -757,7 +807,6 @@ const getElectionSettings = async (req, res) => {
     });
   } catch (error) {
     console.error("Get election settings error:", error);
-
     res.status(500).json({
       success: false,
       message: "Failed to fetch election settings",

@@ -54,12 +54,12 @@ const toggleElection = async (req, res) => {
       )
       `,
       [
+        organizationId,
         "ELECTION_TOGGLE",
         adminId,
         req.user.role,
         JSON.stringify({
           is_active,
-          organization_id: organizationId,
         }),
       ],
     );
@@ -158,9 +158,15 @@ const createAdmin = async (req, res) => {
 
     const result = await pool.query(
       `
-      INSERT INTO admins (username, password_hash, role, organization_id)
+      INSERT INTO admins (
+      username,
+      password_hash, 
+      role, 
+      organization_id
+      )
       VALUES ($1, $2, $3, $4)
-      ON CONFLICT (username) DO NOTHING
+      UNIQUE(username, organization_id)
+      ON CONFLICT (username, organization_id)
       RETURNING id, username, role
       `,
       [username, hashedPassword, finalRole, organizationId],
@@ -183,14 +189,18 @@ const createAdmin = async (req, res) => {
     // audit log
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
+      VALUES ($1, $2, $3, $4, $5)
       `,
       [
         "ADMIN_CREATED",
         superAdminId,
         "superadmin",
-        { new_admin: username, role: finalRole },
+        {
+          new_admin: username,
+          role: finalRole,
+          organization_id: organizationId,
+        },
       ],
     );
 
@@ -275,7 +285,11 @@ const updateAdmin = async (req, res) => {
         "ADMIN_UPDATED",
         superAdminId,
         "superadmin",
-        { admin_id: id, updated_fields: Object.keys(req.body) },
+        {
+          admin_id: id,
+          updated_fields: Object.keys(req.body),
+          organization_id: organizationId,
+        },
       ],
     );
 
@@ -339,7 +353,11 @@ const deleteAdmin = async (req, res) => {
         "ADMIN_DELETED",
         superAdminId,
         "superadmin",
-        { deleted_admin_id: id, username: result.rows[0].username },
+        {
+          deleted_admin_id: id,
+          username: result.rows[0].username,
+          organization_id: organizationId,
+        },
       ],
     );
 
@@ -363,7 +381,8 @@ const updateElectionConfig = async (req, res) => {
     const logoUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     const existing = await pool.query(
-      "SELECT * FROM election_settings WHERE id = 1",
+      "SELECT * FROM election_settings WHERE id = 1 AND organization_id = $1",
+      [organizationId],
     );
 
     const current = existing.rows[0];
@@ -381,6 +400,7 @@ const updateElectionConfig = async (req, res) => {
             updated_by = $5,
             updated_at = NOW()
         WHERE id = 1
+        AND organization_id = $6
         RETURNING *
         `,
       [
@@ -389,6 +409,7 @@ const updateElectionConfig = async (req, res) => {
         description ?? current.description,
         finalLogo,
         adminId,
+        organizationId,
       ],
     );
 

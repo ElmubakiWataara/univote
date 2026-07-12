@@ -1,4 +1,3 @@
-// backend/src/controllers/authController.js
 const pool = require("../config/db");
 const bcrypt = require("bcryptjs");
 const { generateToken } = require("../utils/jwt");
