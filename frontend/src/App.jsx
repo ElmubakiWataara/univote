@@ -9,6 +9,8 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import AdminLogin from "./pages/AdminLogin";
 import OwnerLogin from "./pages/OwnerLogin";
 import OwnerDashboard from "./pages/OwnerDashboard";
+import RegisterOrganization from "./pages/RegisterOrganization";
+import ManageOrganization from "./pages/ManageOrganization";
 import AdminDashboard from "./pages/AdminDashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import RegisterVoter from "./pages/RegisterVoter";
@@ -97,6 +99,24 @@ function App() {
             element={
               <ProtectedRoute requiredRole="owner">
                 <OwnerDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/owner/register-organization"
+            element={
+              <ProtectedRoute requiredRole="owner">
+                <RegisterOrganization />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/owner/organizations"
+            element={
+              <ProtectedRoute requiredRole="owner">
+                <ManageOrganization />
               </ProtectedRoute>
             }
           />

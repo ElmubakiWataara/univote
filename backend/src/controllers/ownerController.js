@@ -117,4 +117,38 @@ const registerOrganization = async (req, res) => {
   }
 };
 
-module.exports = { registerOrganization, ownerLogin };
+// Get All Organizations (Owner Only)
+const getOrganizations = async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        id,
+        name,
+        email,
+        phone,
+        status,
+        created_at,
+        updated_at
+      FROM organizations 
+      WHERE deleted_at IS NULL
+      ORDER BY created_at DESC
+    `);
+
+    res.json({
+      success: true,
+      organizations: result.rows,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch organizations",
+    });
+  }
+};
+
+module.exports = {
+  ownerLogin,
+  registerOrganization,
+  getOrganizations,
+};
