@@ -54,13 +54,13 @@ const toggleElection = async (req, res) => {
       )
       `,
       [
-        organizationId,
         "ELECTION_TOGGLE",
         adminId,
         req.user.role,
         JSON.stringify({
           is_active,
         }),
+        organizationId,
       ],
     );
 

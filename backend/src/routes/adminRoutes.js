@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
+const upload = require("../middleware/uploadElectionLogo");
 
 const { authenticate, authorizeRole } = require("../middleware/auth");
 const {
@@ -18,17 +19,17 @@ const {
   getElectionSettings,
 } = require("../controllers/adminController");
 
-// Setup multer for photo upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
+// // Setup multer for photo upload
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, "uploads/");
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, Date.now() + "-" + file.originalname);
+//   },
+// });
 
-const upload = multer({ storage });
+// const upload = multer({ storage });
 
 // Protect all admin routes
 router.use(authenticate);

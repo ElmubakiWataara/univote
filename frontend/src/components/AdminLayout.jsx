@@ -111,7 +111,7 @@ const AdminLayout = ({ children }) => {
           {
             id: "manage-admins",
             label: "Manage Admins",
-            path: "/super/manage-admins",
+            path: "/super/get-admins",
             icon: ShieldCheck,
           },
           {

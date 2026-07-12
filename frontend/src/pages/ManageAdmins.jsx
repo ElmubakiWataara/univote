@@ -24,7 +24,7 @@ const ManageAdmins = () => {
   const fetchAdmins = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/super/admins`, {
+      const res = await axios.get(`${API_URL}/api/super/get-admins`, {
         headers: { Authorization: `Bearer ${authToken}` },
       });
       setAdmins(res.data.admins || []);

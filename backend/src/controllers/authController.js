@@ -19,9 +19,10 @@ const adminLogin = async (req, res) => {
     if (email) {
       result = await pool.query(
         `
-        SELECT id, email AS username, password_hash, 'superadmin' AS role, organization_id 
-        FROM organizations 
-        WHERE email = $1 AND status = 'active'
+        SELECT id, email AS username, password_hash, 'superadmin' AS role,  id AS organization_id
+        FROM organizations
+        WHERE email = $1
+        AND status = 'active';
         `,
         [email],
       );
@@ -90,7 +91,6 @@ const verifyVoterToken = async (req, res) => {
   }
 
   try {
-    // Check if token exists, not used, and not expired
     const result = await pool.query(
       `
       SELECT t.id, t.voter_id, t.used, t.expires_at, v.student_id, v.full_name, v.has_voted
@@ -125,9 +125,6 @@ const verifyVoterToken = async (req, res) => {
         .json({ success: false, message: "You have already voted" });
     }
 
-    // Mark token as used (we'll do this atomically later with vote)
-    // For now, we issue JWT
-
     const voterToken = generateToken(
       {
         id: tokenData.voter_id,
@@ -135,7 +132,7 @@ const verifyVoterToken = async (req, res) => {
         voterId: tokenData.voter_id,
       },
       "15m",
-    ); // Short expiry for voters
+    );
 
     res.json({
       success: true,

@@ -187,7 +187,7 @@ function App() {
             }
           />
           <Route
-            path="/admin/manage-admins"
+            path="/super/get-admins"
             element={
               <ProtectedRoute>
                 <ManageAdmins />

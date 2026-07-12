@@ -18,7 +18,7 @@ const {
 router.use(authenticate);
 router.use(authorizeRole(["superadmin"]));
 router.get("/audit-logs", getAuditLogs);
-router.get("/admins", getAllAdmins);
+router.get("/get-admins", getAllAdmins);
 router.post("/create-admin", createAdmin);
 router.put("/admins/:id", updateAdmin);
 router.delete("/admins/:id", deleteAdmin);

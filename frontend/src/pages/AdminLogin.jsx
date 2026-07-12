@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import API_URL from "../config/api";
 
 const AdminLogin = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -20,22 +20,24 @@ const AdminLogin = () => {
 
     try {
       const res = await axios.post(`${API_URL}/api/auth/admin-login`, {
-        username,
+        email,
         password,
       });
 
       if (res.data.success) {
         login(res.data.token, res.data.user);
 
-        // Correct Role-based Redirection
+        // Role-based redirection
         if (res.data.user.role === "superadmin") {
-          navigate("/admin/super"); // ← Matches your App.jsx route
+          navigate("/admin/super");
+        } else if (res.data.user.role === "admin") {
+          navigate("/admin/dashboard");
         } else {
           navigate("/admin/dashboard");
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid username or password");
+      setError(err.response?.data?.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }
@@ -52,14 +54,14 @@ const AdminLogin = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Username
+              Email
             </label>
             <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-5 py-4 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-600 text-lg"
-              placeholder="Enter username"
+              placeholder="Enter email"
               required
             />
           </div>

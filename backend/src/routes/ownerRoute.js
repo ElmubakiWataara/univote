@@ -12,9 +12,14 @@ router.post(
   authorizeRole(["owner"]),
   registerOrganization,
 );
+router.get(
+  "/organizations",
+  authenticate,
+  authorizeRole(["owner"]),
+  getOrganizations,
+);
 
 router.post("/login", ownerLogin);
 router.post("/register-organization", registerOrganization); // Public for now or protected later
-router.get("/organizations", getOrganizations);
 
 module.exports = router;
