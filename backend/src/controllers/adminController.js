@@ -1,4 +1,3 @@
-// backend/src/controllers/adminController.js
 const pool = require("../config/db");
 const crypto = require("crypto");
 const {
@@ -12,6 +11,7 @@ const updateVoter = async (req, res) => {
   const { id } = req.params;
   let { student_id, full_name, department, email } = req.body;
   const adminId = req.user.id;
+  const organizationId = req.user.organization_id;
 
   try {
     // Check current voter status
@@ -85,6 +85,7 @@ const updateVoter = async (req, res) => {
 const deleteVoter = async (req, res) => {
   const { id } = req.params;
   const adminId = req.user.id;
+  const organizationId = req.user.organization_id;
 
   try {
     // Check if voter has voted
@@ -119,6 +120,7 @@ const deleteVoter = async (req, res) => {
 const registerVoter = async (req, res) => {
   let { student_id, full_name, department, email } = req.body;
   const adminId = req.user.id;
+  const organizationId = req.user.organization_id;
 
   if (!student_id || !full_name) {
     return res.status(400).json({
@@ -190,6 +192,7 @@ const registerVoter = async (req, res) => {
 const bulkRegisterVoters = async (req, res) => {
   const adminId = req.user.id;
   const file = req.file;
+  const organizationId = req.user.organization_id;
 
   if (!file) {
     return res
@@ -289,6 +292,7 @@ const bulkRegisterVoters = async (req, res) => {
 };
 
 const getCandidates = async (req, res) => {
+  const organizationId = req.user.organization_id;
   try {
     const result = await pool.query(`
       SELECT id, name, position, bio, photo_url, yes_or_no
@@ -307,6 +311,7 @@ const getCandidates = async (req, res) => {
 const addCandidate = async (req, res) => {
   let { name, position, bio, yes_or_no } = req.body;
   const adminId = req.user.id;
+  const organizationId = req.user.organization_id;
 
   if (!name || !position) {
     return res.status(400).json({
@@ -366,6 +371,7 @@ const updateCandidate = async (req, res) => {
   const { id } = req.params;
   let { name, position, bio, yes_or_no } = req.body; // Note: yes_or_no from frontend
   const adminId = req.user.id;
+  const organizationId = req.user.organization_id;
 
   if (!name || !position) {
     return res.status(400).json({
@@ -442,6 +448,7 @@ const updateCandidate = async (req, res) => {
 const deleteCandidate = async (req, res) => {
   const { id } = req.params;
   const adminId = req.user.id;
+  const organizationId = req.user.organization_id;
 
   try {
     // Check if candidate has any votes
@@ -499,6 +506,7 @@ const generateVoterToken = async (req, res) => {
   const { student_id } = req.body;
   const adminId = req.user.id;
   const adminRole = req.user.role;
+  const organizationId = req.user.organization_id;
 
   if (!student_id) {
     return res.status(400).json({
@@ -607,6 +615,7 @@ const generateVoterToken = async (req, res) => {
 
 // Get all voters (for admin dashboard)
 const getAllVoters = async (req, res) => {
+  const organizationId = req.user.organization_id;
   try {
     const result = await pool.query(`
       SELECT id, student_id, full_name, department, has_voted, created_at 
@@ -673,6 +682,7 @@ const getResults = async (req, res) => {
 
 //basic information
 const getPublicElectionInfo = async (req, res) => {
+  const organizationId = req.user.organization_id;
   try {
     const result = await pool.query(`
       SELECT
@@ -697,6 +707,7 @@ const getPublicElectionInfo = async (req, res) => {
 };
 
 const getElectionSettings = async (req, res) => {
+  const organizationId = req.user.organization_id;
   try {
     let result = await pool.query(
       `

@@ -4,6 +4,7 @@ const pool = require("../config/db");
 const toggleElection = async (req, res) => {
   const { is_active } = req.body;
   const adminId = req.user.id;
+  const organizationId = req.user.organization_id;
 
   if (typeof is_active !== "boolean") {
     return res.status(400).json({
@@ -20,10 +21,10 @@ const toggleElection = async (req, res) => {
         is_active = $1,
         updated_by = $2,
         updated_at = NOW()
-      WHERE id = 1
+      WHERE id = 1 AND organization_id = $3
       RETURNING is_active
       `,
-      [is_active, adminId],
+      [is_active, adminId, organizationId],
     );
 
     if (result.rows.length === 0) {
@@ -40,14 +41,16 @@ const toggleElection = async (req, res) => {
         action,
         actor_id,
         actor_role,
-        details
+        details,
+        organization_id
       )
       VALUES
       (
         $1,
         $2,
         $3,
-        $4
+        $4,
+        $5
       )
       `,
       [
@@ -56,6 +59,7 @@ const toggleElection = async (req, res) => {
         req.user.role,
         JSON.stringify({
           is_active,
+          organization_id: organizationId,
         }),
       ],
     );
@@ -76,6 +80,7 @@ const toggleElection = async (req, res) => {
 };
 
 const getAuditLogs = async (req, res) => {
+  const organizationId = req.user.organization_id;
   try {
     const limit = parseInt(req.query.limit) || 10;
 
@@ -83,10 +88,11 @@ const getAuditLogs = async (req, res) => {
       `
       SELECT id, action, actor_id, actor_role, details, created_at 
       FROM audit_logs 
+      WHERE organization_id = $2
       ORDER BY created_at DESC 
       LIMIT $1
     `,
-      [limit],
+      [organizationId, limit],
     );
 
     res.json({
@@ -103,12 +109,16 @@ const getAuditLogs = async (req, res) => {
 };
 
 const getAllAdmins = async (req, res) => {
+  const organizationId = req.user.organization_id;
   try {
-    const result = await pool.query(`
+    const result = await pool.query(
+      `
       SELECT id, username, role, created_at 
       FROM admins 
+      WHERE organization_id = $1
       ORDER BY role DESC, username
-    `);
+    `[organizationId],
+    );
 
     res.json({
       success: true,
@@ -123,6 +133,7 @@ const getAllAdmins = async (req, res) => {
 const createAdmin = async (req, res) => {
   const { username, password, role } = req.body;
   const superAdminId = req.user.id;
+  const organizationId = req.user.organization_id;
 
   if (!username || !password) {
     return res.status(400).json({
@@ -147,12 +158,12 @@ const createAdmin = async (req, res) => {
 
     const result = await pool.query(
       `
-      INSERT INTO admins (username, password_hash, role)
-      VALUES ($1, $2, $3)
+      INSERT INTO admins (username, password_hash, role, organization_id)
+      VALUES ($1, $2, $3, $4)
       ON CONFLICT (username) DO NOTHING
       RETURNING id, username, role
       `,
-      [username, hashedPassword, finalRole],
+      [username, hashedPassword, finalRole, organizationId],
     );
 
     if (result.rows.length === 0) {
@@ -201,6 +212,7 @@ const updateAdmin = async (req, res) => {
   const { id } = req.params;
   const { username, password } = req.body;
   const superAdminId = req.user.id;
+  const organizationId = req.user.organization_id;
 
   if (!username && !password) {
     return res.status(400).json({
@@ -240,8 +252,10 @@ const updateAdmin = async (req, res) => {
       SET ${updateFields.join(", ")}
       WHERE id = $${paramCount} AND role = 'admin'
       RETURNING id, username, role
+      AND organization_id = $${paramCount}
       `,
-      values,
+      values.push(id),
+      values.push(organization),
     );
 
     if (result.rows.length === 0) {
@@ -254,8 +268,8 @@ const updateAdmin = async (req, res) => {
     // Audit log
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
+      VALUES ($1, $2, $3, $4, $5)
     `,
       [
         "ADMIN_UPDATED",
@@ -280,6 +294,7 @@ const updateAdmin = async (req, res) => {
 const deleteAdmin = async (req, res) => {
   const { id } = req.params;
   const superAdminId = req.user.id;
+  const organizationId = req.user.organization_id;
 
   try {
     // Prevent deleting superadmin or self
@@ -303,7 +318,7 @@ const deleteAdmin = async (req, res) => {
     }
 
     const result = await pool.query(
-      "DELETE FROM admins WHERE id = $1 AND role = 'admin' RETURNING id, username",
+      "DELETE FROM admins WHERE id = $1 AND role = 'admin', organization_id = $2 RETURNING id, username",
       [id],
     );
 
@@ -317,8 +332,8 @@ const deleteAdmin = async (req, res) => {
     // Audit log
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
+      VALUES ($1, $2, $3, $4, $5)
     `,
       [
         "ADMIN_DELETED",
@@ -338,66 +353,9 @@ const deleteAdmin = async (req, res) => {
   }
 };
 
-// const getElectionSettings = async (req, res) => {
-//   try {
-//     let result = await pool.query(
-//       `
-//       SELECT
-//         id,
-//         title,
-//         logo_url,
-//         academic_year,
-//         description,
-//         is_active,
-//         updated_by,
-//         updated_at
-//       FROM election_settings
-//       WHERE id = 1
-//       `,
-//     );
-
-//     if (result.rows.length === 0) {
-//       await pool.query(
-//         `
-//         INSERT INTO election_settings
-//         (
-//           id,
-//           is_active
-//         )
-//         VALUES
-//         (
-//           1,
-//           FALSE
-//         )
-//         ON CONFLICT (id) DO NOTHING
-//         `,
-//       );
-
-//       result = await pool.query(
-//         `
-//         SELECT *
-//         FROM election_settings
-//         WHERE id = 1
-//         `,
-//       );
-//     }
-
-//     res.json({
-//       success: true,
-//       settings: result.rows[0],
-//     });
-//   } catch (error) {
-//     console.error("Get election settings error:", error);
-
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to fetch election settings",
-//     });
-//   }
-// };
-
 const updateElectionConfig = async (req, res) => {
   const adminId = req.user.id;
+  const organizationId = req.user.organization_id;
 
   let { title, academic_year, description } = req.body;
 
@@ -441,14 +399,16 @@ const updateElectionConfig = async (req, res) => {
         action,
         actor_id,
         actor_role,
-        details
+        details,
+        organization_id
       )
       VALUES
       (
         $1,
         $2,
         $3,
-        $4
+        $4,
+        $5
       )
       `,
       [

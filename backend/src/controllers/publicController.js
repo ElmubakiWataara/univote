@@ -1,6 +1,7 @@
 const pool = require("../config/db");
 
 const getPublicElectionInfo = async (req, res) => {
+  const organizationId = req.user.organization_id;
   try {
     const result = await pool.query(
       `

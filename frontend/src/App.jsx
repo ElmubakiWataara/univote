@@ -7,6 +7,8 @@ import {
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 import AdminLogin from "./pages/AdminLogin";
+import OwnerLogin from "./pages/OwnerLogin";
+import OwnerDashboard from "./pages/OwnerDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import RegisterVoter from "./pages/RegisterVoter";
@@ -14,15 +16,14 @@ import GenerateToken from "./pages/GenerateToken";
 import ListVoters from "./pages/ListVoters";
 import AddCandidate from "./pages/AddCandidate";
 import ListCandidates from "./pages/ListCandidates";
-// import Settings from "./pages/Settings";
-import VoterTokenInput from "./pages/VoterTokenInput";
-import VotingPage from "./pages/VotingPage";
 import ResultsPage from "./pages/ResultsPage";
 import AuditLogs from "./pages/AuditLogs";
 import ManageAdmins from "./pages/ManageAdmins";
 import ElectionConfig from "./pages/ElectionConfig";
+import VoterTokenInput from "./pages/VoterTokenInput";
+import VotingPage from "./pages/VotingPage";
 
-// Loading Spinner Component
+// Loading Screen
 const LoadingScreen = () => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
     <div className="text-center">
@@ -38,28 +39,15 @@ const ProtectedRoute = ({ children, requiredRole }) => {
 
   if (loading) return <LoadingScreen />;
 
-  if (!token) {
+  if (!token || !user) {
     return <Navigate to="/admin/login" replace />;
   }
 
-  if (requiredRole === "superadmin" && user?.role !== "superadmin") {
+  if (requiredRole && user.role !== requiredRole) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
   return children;
-};
-
-// Smart Default Redirect
-const DashboardRedirect = () => {
-  const { user, loading } = useAuth();
-
-  if (loading) return <LoadingScreen />;
-
-  return user?.role === "superadmin" ? (
-    <Navigate to="/admin/super" replace />
-  ) : (
-    <Navigate to="/admin/dashboard" replace />
-  );
 };
 
 function App() {
@@ -71,13 +59,21 @@ function App() {
           <Route path="/" element={<VoterTokenInput />} />
           <Route path="/vote" element={<VotingPage />} />
 
-          {/* Admin Login */}
+          {/* Login Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/owner/login" element={<OwnerLogin />} />
 
-          {/* Default Dashboard (handles /admin and refresh) */}
-          <Route path="/admin" element={<DashboardRedirect />} />
+          {/* Role-based Default Redirects */}
+          <Route
+            path="/admin"
+            element={<Navigate to="/admin/dashboard" replace />}
+          />
+          <Route
+            path="/owner"
+            element={<Navigate to="/owner/dashboard" replace />}
+          />
 
-          {/* Regular Admin Dashboard */}
+          {/* Protected Routes */}
           <Route
             path="/admin/dashboard"
             element={
@@ -87,7 +83,6 @@ function App() {
             }
           />
 
-          {/* Super Admin Dashboard */}
           <Route
             path="/admin/super"
             element={
@@ -97,7 +92,16 @@ function App() {
             }
           />
 
-          {/* Shared Routes */}
+          <Route
+            path="/owner/dashboard"
+            element={
+              <ProtectedRoute requiredRole="owner">
+                <OwnerDashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Other Protected Routes */}
           <Route
             path="/admin/register-voter"
             element={
@@ -162,9 +166,8 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
-            path="/super/manage-admins"
+            path="/admin/manage-admins"
             element={
               <ProtectedRoute>
                 <ManageAdmins />

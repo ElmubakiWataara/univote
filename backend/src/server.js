@@ -14,6 +14,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const voteRoutes = require("./routes/voteRoutes");
 const superAdminRoutes = require("./routes/superAdminRoutes");
 const publicRoutes = require("./routes/publicRoute.s");
+const ownerRoutes = require("./routes/ownerRoute");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -65,6 +66,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/vote", voteRoutes);
 app.use("/api/super", superAdminRoutes);
+app.use("/api/owner", ownerRoutes);
 
 // Global error handler (must be last)
 app.use(errorHandler);

@@ -4,49 +4,75 @@ const bcrypt = require("bcryptjs");
 const { generateToken } = require("../utils/jwt");
 
 const adminLogin = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, username, password } = req.body;
 
-  if (!username || !password) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Username and password required" });
+  if (!password || (!email && !username)) {
+    return res.status(400).json({
+      success: false,
+      message: "Email (or Username for Owner) and password are required",
+    });
   }
 
   try {
-    const result = await pool.query(
-      "SELECT id, username, password_hash, role FROM admins WHERE username = $1",
-      [username],
-    );
+    let result;
 
-    if (result.rows.length === 0) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
+    // Try SuperAdmin first (email)
+    if (email) {
+      result = await pool.query(
+        `
+        SELECT id, email AS username, password_hash, 'superadmin' AS role, organization_id 
+        FROM organizations 
+        WHERE email = $1 AND status = 'active'
+        `,
+        [email],
+      );
     }
 
-    const admin = result.rows[0];
-    const isMatch = await bcrypt.compare(password, admin.password_hash);
+    // If not found, try regular Admin (email)
+    if (!result || result.rows.length === 0) {
+      result = await pool.query(
+        `
+        SELECT id, email AS username, password_hash, role, organization_id 
+        FROM admins 
+        WHERE email = $1
+        `,
+        [email || username],
+      );
+    }
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    const user = result.rows[0];
+    const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
     }
 
     const token = generateToken({
-      id: admin.id,
-      username: admin.username,
-      role: admin.role,
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      organization_id: user.organization_id,
     });
 
     res.json({
       success: true,
-      message: "Admin login successful",
+      message: "Login successful",
       token,
       user: {
-        id: admin.id,
-        username: admin.username,
-        role: admin.role,
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        organization_id: user.organization_id,
       },
     });
   } catch (error) {
