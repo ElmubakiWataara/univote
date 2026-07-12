@@ -13,7 +13,7 @@ const authenticate = (req, res, next) => {
 
   try {
     const decoded = verifyToken(token);
-    req.user = decoded; // { id, username, role, ... }
+    req.user = decoded; // { id, username, role, organization_id, ... }
     next();
   } catch (error) {
     return res

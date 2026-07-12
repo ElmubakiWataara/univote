@@ -1,4 +1,3 @@
-// backend/src/routes/superAdminRoutes.js
 const express = require("express");
 const router = express.Router();
 const uploadElectionLogo = require("../middleware/uploadElectionLogo");

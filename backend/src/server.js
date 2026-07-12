@@ -1,4 +1,3 @@
-// backend/src/server.js
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -70,11 +69,6 @@ app.use("/api/owner", ownerRoutes);
 
 // Global error handler (must be last)
 app.use(errorHandler);
-
-// Catch-all route to serve React frontend for any unknown route
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "../../frontend/dist/index.html"));
-// });
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Voting Server running on http://0.0.0.0:${PORT}`);
