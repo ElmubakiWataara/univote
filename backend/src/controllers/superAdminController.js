@@ -146,7 +146,7 @@ const getAllAdmins = async (req, res) => {
 
 // Create New Admin (Super Admin Only)
 const createAdmin = async (req, res) => {
-  const { name, email, password, role } = req.body;
+  const { name, email, password } = req.body;
   const superAdminId = req.user.id;
   const organizationId = req.user.organization_id;
 
@@ -167,18 +167,6 @@ const createAdmin = async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // allowed roles (security control)
-    const allowedRoles = ["admin", "superadmin"];
-    const finalRole = allowedRoles.includes(role) ? role : "admin";
-
-    // only superadmins can create superadmins
-    if (role === "superadmin" && req.user.role !== "superadmin") {
-      return res.status(403).json({
-        success: false,
-        message: "Only superadmins can create superadmins",
-      });
-    }
-
     const result = await pool.query(
       `
       INSERT INTO admins (
@@ -188,13 +176,13 @@ const createAdmin = async (req, res) => {
         role,
         organization_id
       )
-      VALUES ($1, $2, $3, $4, $5)
-      ON CONFLICT (email, organization_id)
-      DO NOTHING
+      VALUES ($1, $2, $3, 'admin', $4)
+      ON CONFLICT (email, organization_id) DO NOTHING
       RETURNING id, username, email, role
       `,
-      [name, email, hashedPassword, finalRole, organizationId],
+      [name, email, hashedPassword, organizationId],
     );
+
     if (result.rows.length === 0) {
       return res.status(409).json({
         success: false,
@@ -202,7 +190,7 @@ const createAdmin = async (req, res) => {
       });
     }
 
-    // audit log
+    // Audit log
     await pool.query(
       `
       INSERT INTO audit_logs (
@@ -221,11 +209,11 @@ const createAdmin = async (req, res) => {
         {
           new_admin: name,
           email: email,
-          role: finalRole,
+          role: "admin",
           organization_id: organizationId,
         },
+        organizationId,
       ],
-      organizationId,
     );
 
     res.status(201).json({
@@ -235,7 +223,6 @@ const createAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-
     res.status(500).json({
       success: false,
       message: "Failed to create admin",
@@ -366,14 +353,6 @@ const deleteAdmin = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Admin not found",
-      });
-    }
-
-    // Prevent deleting superadmin
-    if (adminCheck.rows[0].role === "superadmin") {
-      return res.status(403).json({
-        success: false,
-        message: "Cannot delete Super Admin account",
       });
     }
 

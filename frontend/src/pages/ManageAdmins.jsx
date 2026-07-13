@@ -12,7 +12,6 @@ const ManageAdmins = () => {
     name: "",
     email: "",
     password: "",
-    role: "admin",
   });
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [editForm, setEditForm] = useState({ username: "", password: "" });
@@ -52,19 +51,11 @@ const ManageAdmins = () => {
 
     try {
       await axios.post(`${API_URL}/api/super/create-admin`, formData, {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
+        headers: { Authorization: `Bearer ${authToken}` },
       });
 
       setSuccess("Admin created successfully!");
-
-      setFormData({
-        email: "",
-        password: "",
-        role: "admin",
-      });
-
+      setFormData({ name: "", email: "", password: "" });
       fetchAdmins();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create admin");
@@ -185,7 +176,7 @@ const ManageAdmins = () => {
                   required
                 />
               </div>
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Role
                 </label>
@@ -200,7 +191,7 @@ const ManageAdmins = () => {
                   <option value="admin">Admin</option>
                   <option value="superadmin">Super Admin</option>
                 </select>
-              </div>
+              </div> */}
 
               <button
                 type="submit"
