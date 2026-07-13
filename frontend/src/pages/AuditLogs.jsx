@@ -10,6 +10,7 @@ const AuditLogs = () => {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [showAll, setShowAll] = useState(false);
 
   const { token: authToken } = useAuth();
 
@@ -102,23 +103,28 @@ const AuditLogs = () => {
         <div className="bg-white rounded-3xl shadow p-6 mb-8 flex flex-col md:flex-row gap-4">
           <input
             type="text"
-            placeholder="Search logs (action, details, date)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+            placeholder="Search action or details..."
+            className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
           />
 
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+            className="px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600 bg-white"
           >
             <option value="all">All Actions</option>
             <option value="VOTER_REGISTERED">Voter Registered</option>
             <option value="BULK_VOTER_REGISTERED">Bulk Registration</option>
             <option value="CANDIDATE_ADDED">Candidate Added</option>
+            <option value="TOKEN_GENERATED">Token Generated</option>
             <option value="VOTE_CAST">Vote Cast</option>
-            <option value="ELECTION_TOGGLED">Election Toggled</option>
+            <option value="BALLOT_SUBMITTED">Ballot Submitted</option>
+            <option value="ELECTION_TOGGLE">Election Toggled</option>
+            <option value="ADMIN_CREATED">Admin Created</option>
+            <option value="ADMIN_UPDATED">Admin Updated</option>
+            <option value="ADMIN_DELETED">Admin Deleted</option>
           </select>
         </div>
 
@@ -144,29 +150,31 @@ const AuditLogs = () => {
               </thead>
               <tbody className="divide-y">
                 {filteredLogs.length > 0 ? (
-                  filteredLogs.map((log, i) => (
-                    <tr key={i} className="hover:bg-gray-50">
-                      <td className="px-8 py-5 text-sm text-gray-500 whitespace-nowrap">
-                        {new Date(log.created_at).toLocaleString()}
-                      </td>
-                      <td className="px-8 py-5">
-                        <span className="font-medium text-gray-900">
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="px-8 py-5 text-sm">
-                        <span className="capitalize">{log.actor_role}</span>
-                        <span className="text-gray-500 ml-2">
-                          #{log.actor_id}
-                        </span>
-                      </td>
-                      <td className="px-8 py-5 text-sm text-gray-600 break-words max-w-md">
-                        {typeof log.details === "string"
-                          ? log.details
-                          : JSON.stringify(log.details)}
-                      </td>
-                    </tr>
-                  ))
+                  filteredLogs
+                    .slice(0, showAll ? filteredLogs.length : 10)
+                    .map((log, i) => (
+                      <tr key={i} className="hover:bg-gray-50">
+                        <td className="px-8 py-5 text-sm text-gray-500 whitespace-nowrap">
+                          {new Date(log.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-8 py-5">
+                          <span className="font-medium text-gray-900">
+                            {log.action}
+                          </span>
+                        </td>
+                        <td className="px-8 py-5 text-sm">
+                          <span className="capitalize">{log.actor_role}</span>
+                          <span className="text-gray-500 ml-2">
+                            #{log.actor_id}
+                          </span>
+                        </td>
+                        <td className="px-8 py-5 text-sm text-gray-600 break-words max-w-md">
+                          {typeof log.details === "string"
+                            ? log.details
+                            : JSON.stringify(log.details)}
+                        </td>
+                      </tr>
+                    ))
                 ) : (
                   <tr>
                     <td
@@ -180,6 +188,18 @@ const AuditLogs = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Show All Button */}
+          {filteredLogs.length > 10 && (
+            <div className="p-6 border-t text-center">
+              <button
+                onClick={() => setShowAll(!showAll)}
+                className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-2xl transition flex items-center gap-2 mx-auto"
+              >
+                {showAll ? "Show Less" : `Show All (${filteredLogs.length})`}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>
