@@ -544,8 +544,8 @@ const deleteCandidate = async (req, res) => {
 // Generate Voter Token (Scoped)
 const generateVoterToken = async (req, res) => {
   const { student_id } = req.body;
-  const adminId = req.user.id;
-  const adminRole = req.user.role;
+  const actorId = req.user.id;
+  const actorRole = req.user.role;
   const organizationId = req.user.organization_id;
 
   if (!student_id) {
@@ -556,7 +556,7 @@ const generateVoterToken = async (req, res) => {
   }
 
   try {
-    // 1. Check if election is active for this organization
+    // Check election active
     const electionCheck = await pool.query(
       "SELECT is_active FROM election_settings WHERE organization_id = $1",
       [organizationId],
@@ -565,11 +565,11 @@ const generateVoterToken = async (req, res) => {
     if (!electionCheck.rows[0]?.is_active) {
       return res.status(400).json({
         success: false,
-        message: "Election is currently closed by Super Admin",
+        message: "Election is currently closed",
       });
     }
 
-    // 2. Check if voter exists and hasn't voted yet (scoped)
+    // Check voter
     const voterResult = await pool.query(
       `SELECT id, full_name, has_voted 
        FROM voters 
@@ -580,7 +580,7 @@ const generateVoterToken = async (req, res) => {
     if (voterResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "Voter with this Student ID not found",
+        message: "Voter not found",
       });
     }
 
@@ -602,7 +602,6 @@ const generateVoterToken = async (req, res) => {
       tokenValue += chars.charAt(randomBytes[i] % chars.length);
     }
 
-    // Set 15 minutes expiry
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
     // Save token
@@ -612,7 +611,7 @@ const generateVoterToken = async (req, res) => {
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id, token_value, expires_at
     `,
-      [voter.id, tokenValue, adminId, expiresAt, organizationId],
+      [voter.id, tokenValue, actorId, expiresAt, organizationId],
     );
 
     // Audit log
@@ -623,12 +622,11 @@ const generateVoterToken = async (req, res) => {
     `,
       [
         "TOKEN_GENERATED",
-        adminId,
-        adminRole,
+        actorId,
+        actorRole,
         {
-          student_id: student_id,
+          student_id,
           voter_name: voter.full_name,
-          token_id: tokenInsert.rows[0].id,
           token_value: tokenValue,
         },
         organizationId,
