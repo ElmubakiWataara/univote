@@ -482,6 +482,7 @@ const updateElectionConfig = async (req, res) => {
           title,
           academic_year,
         }),
+        organizationId,
       ],
     );
 
