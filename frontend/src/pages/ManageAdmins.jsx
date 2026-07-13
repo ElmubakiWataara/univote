@@ -9,7 +9,8 @@ const ManageAdmins = () => {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    username: "",
+    name: "",
+    email: "",
     password: "",
     role: "admin",
   });
@@ -43,29 +44,26 @@ const ManageAdmins = () => {
   const handleCreateAdmin = async (e) => {
     e.preventDefault();
 
-    if (!formData.username || !formData.password) return;
+    if (!formData.name || !formData.email || !formData.password) return;
 
     setSubmitting(true);
     setError("");
     setSuccess("");
 
     try {
-      const res = await axios.post(
-        `${API_URL}/api/super/create-admin`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
+      await axios.post(`${API_URL}/api/super/create-admin`, formData, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
         },
-      );
+      });
 
       setSuccess("Admin created successfully!");
-      setFormData(() => ({
-        username: "",
+
+      setFormData({
+        email: "",
         password: "",
         role: "admin",
-      }));
+      });
 
       fetchAdmins();
     } catch (err) {
@@ -133,26 +131,47 @@ const ManageAdmins = () => {
             <form onSubmit={handleCreateAdmin} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Username
+                  Name
                 </label>
+
                 <input
                   type="text"
-                  name="new-admin-username"
-                  autoComplete="off"
-                  value={formData.username}
+                  value={formData.name}
                   onChange={(e) =>
-                    setFormData({ ...formData, username: e.target.value })
+                    setFormData({
+                      ...formData,
+                      name: e.target.value,
+                    })
                   }
                   className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
-                  placeholder="Enter username"
+                  placeholder="Enter admin name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+
+                <input
+                  type="email"
+                  name="new-admin-email"
+                  autoComplete="off"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                  placeholder="Enter admin email"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm medium text-gray-700 mb-2">
                   Password
                 </label>
+
                 <input
                   type="password"
                   name="new-admin-password"
@@ -198,7 +217,7 @@ const ManageAdmins = () => {
             {error && <p className="mt-4 text-red-600">{error}</p>}
           </div>
 
-          {/* Admins List - Scrollable Table */}
+          {/* Admins List -Scrollable Table */}
           <div className="lg:col-span-3 self-start bg-white rounded-3xl shadow">
             <div className="p-6 border-b flex justify-between items-center">
               <h2 className="text-xl font-semibold">
@@ -220,7 +239,7 @@ const ManageAdmins = () => {
                           ID
                         </th>
                         <th className="text-left py-5 px-8 font-medium text-gray-600">
-                          Username
+                          Name
                         </th>
                         <th className="text-left py-5 px-8 font-medium text-gray-600">
                           Role
@@ -289,16 +308,33 @@ const ManageAdmins = () => {
             <form onSubmit={handleUpdateAdmin} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Username
+                  Name
                 </label>
                 <input
                   type="text"
                   value={editForm.username}
                   onChange={(e) =>
-                    setEditForm({ ...editForm, username: e.target.value })
+                    setEditForm({
+                      ...editForm,
+                      username: e.target.value,
+                    })
                   }
                   className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                  placeholder="Enter admin name"
                   required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+
+                <input
+                  type="email"
+                  value={editingAdmin.email}
+                  className="w-full px-6 py-4 border border-gray-200 bg-gray-100 rounded-2xl"
+                  disabled
                 />
               </div>
 

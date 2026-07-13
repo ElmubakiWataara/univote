@@ -81,17 +81,24 @@ const toggleElection = async (req, res) => {
 
 const getAuditLogs = async (req, res) => {
   const organizationId = req.user.organization_id;
+
   try {
     const limit = parseInt(req.query.limit) || 10;
 
     const result = await pool.query(
       `
-      SELECT id, action, actor_id, actor_role, details, created_at 
-      FROM audit_logs 
-      WHERE organization_id = $2
-      ORDER BY created_at DESC 
-      LIMIT $1
-    `,
+      SELECT 
+        id,
+        action,
+        actor_id,
+        actor_role,
+        details,
+        created_at
+      FROM audit_logs
+      WHERE organization_id = $1
+      ORDER BY created_at DESC
+      LIMIT $2
+      `,
       [organizationId, limit],
     );
 
@@ -101,6 +108,7 @@ const getAuditLogs = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+
     res.status(500).json({
       success: false,
       message: "Failed to fetch audit logs",
@@ -110,14 +118,16 @@ const getAuditLogs = async (req, res) => {
 
 const getAllAdmins = async (req, res) => {
   const organizationId = req.user.organization_id;
+
   try {
     const result = await pool.query(
       `
-      SELECT id, username, role, created_at 
+      SELECT id, username, email, role, created_at 
       FROM admins 
       WHERE organization_id = $1
       ORDER BY role DESC, username
-    `[organizationId],
+      `,
+      [organizationId],
     );
 
     res.json({
@@ -125,20 +135,25 @@ const getAllAdmins = async (req, res) => {
       admins: result.rows,
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Failed to fetch admins" });
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch admins",
+    });
   }
 };
 
 // Create New Admin (Super Admin Only)
 const createAdmin = async (req, res) => {
-  const { username, password, role } = req.body;
+  const { name, email, password, role } = req.body;
   const superAdminId = req.user.id;
   const organizationId = req.user.organization_id;
 
-  if (!username || !password) {
+  if (!name || !email || !password) {
     return res.status(400).json({
       success: false,
-      message: "Username and password are required",
+      message: "Name, email and password are required",
     });
   }
 
@@ -156,29 +171,7 @@ const createAdmin = async (req, res) => {
     const allowedRoles = ["admin", "superadmin"];
     const finalRole = allowedRoles.includes(role) ? role : "admin";
 
-    const result = await pool.query(
-      `
-      INSERT INTO admins (
-      username,
-      password_hash, 
-      role, 
-      organization_id
-      )
-      VALUES ($1, $2, $3, $4)
-      UNIQUE(username, organization_id)
-      ON CONFLICT (username, organization_id)
-      RETURNING id, username, role
-      `,
-      [username, hashedPassword, finalRole, organizationId],
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(409).json({
-        success: false,
-        message: "Username already exists",
-      });
-    }
-    //only admins to add admins
+    // only superadmins can create superadmins
     if (role === "superadmin" && req.user.role !== "superadmin") {
       return res.status(403).json({
         success: false,
@@ -186,32 +179,64 @@ const createAdmin = async (req, res) => {
       });
     }
 
+    const result = await pool.query(
+      `
+      INSERT INTO admins (
+        username,
+        email,
+        password_hash,
+        role,
+        organization_id
+      )
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (email, organization_id)
+      DO NOTHING
+      RETURNING id, username, email, role
+      `,
+      [name, email, hashedPassword, finalRole, organizationId],
+    );
+    if (result.rows.length === 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Email already exists",
+      });
+    }
+
     // audit log
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
+      INSERT INTO audit_logs (
+        action,
+        actor_id,
+        actor_role,
+        details,
+        organization_id
+      )
       VALUES ($1, $2, $3, $4, $5)
       `,
       [
         "ADMIN_CREATED",
         superAdminId,
-        "superadmin",
+        req.user.role,
         {
-          new_admin: username,
+          new_admin: name,
+          email: email,
           role: finalRole,
           organization_id: organizationId,
         },
       ],
+      organizationId,
     );
 
-    return res.json({
+    res.status(201).json({
       success: true,
-      message: "New admin created successfully",
+      message: "Admin created successfully",
       admin: result.rows[0],
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({
+
+    res.status(500).json({
       success: false,
       message: "Failed to create admin",
     });
@@ -221,13 +246,14 @@ const createAdmin = async (req, res) => {
 const updateAdmin = async (req, res) => {
   const { id } = req.params;
   const { username, password } = req.body;
+
   const superAdminId = req.user.id;
   const organizationId = req.user.organization_id;
 
   if (!username && !password) {
     return res.status(400).json({
       success: false,
-      message: "At least username or password is required",
+      message: "At least name or password is required",
     });
   }
 
@@ -248,24 +274,29 @@ const updateAdmin = async (req, res) => {
           message: "Password must be at least 6 characters",
         });
       }
-      const bcrypt = require("bcryptjs");
+
       const hashedPassword = await bcrypt.hash(password, 10);
+
       updateFields.push(`password_hash = $${paramCount++}`);
       values.push(hashedPassword);
     }
 
-    values.push(id); // For WHERE clause
+    // WHERE id
+    values.push(id);
+
+    // WHERE organization_id
+    values.push(organizationId);
 
     const result = await pool.query(
       `
-      UPDATE admins 
+      UPDATE admins
       SET ${updateFields.join(", ")}
-      WHERE id = $${paramCount} AND role = 'admin'
-      RETURNING id, username, role
-      AND organization_id = $${paramCount}
+      WHERE id = $${paramCount}
+      AND organization_id = $${paramCount + 1}
+      AND role = 'admin'
+      RETURNING id, username, email, role
       `,
-      values.push(id),
-      values.push(organization),
+      values,
     );
 
     if (result.rows.length === 0) {
@@ -275,21 +306,26 @@ const updateAdmin = async (req, res) => {
       });
     }
 
-    // Audit log
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
-      VALUES ($1, $2, $3, $4, $5)
-    `,
+      INSERT INTO audit_logs (
+        action,
+        actor_id,
+        actor_role,
+        details,
+        organization_id
+      )
+      VALUES ($1,$2,$3,$4,$5)
+      `,
       [
         "ADMIN_UPDATED",
         superAdminId,
-        "superadmin",
-        {
+        req.user.role,
+        JSON.stringify({
           admin_id: id,
           updated_fields: Object.keys(req.body),
-          organization_id: organizationId,
-        },
+        }),
+        organizationId,
       ],
     );
 
@@ -300,7 +336,11 @@ const updateAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Failed to update admin" });
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update admin",
+    });
   }
 };
 
@@ -311,10 +351,15 @@ const deleteAdmin = async (req, res) => {
   const organizationId = req.user.organization_id;
 
   try {
-    // Prevent deleting superadmin or self
+    // Check admin exists in this organization
     const adminCheck = await pool.query(
-      "SELECT role FROM admins WHERE id = $1",
-      [id],
+      `
+      SELECT role, username
+      FROM admins
+      WHERE id = $1
+      AND organization_id = $2
+      `,
+      [id, organizationId],
     );
 
     if (adminCheck.rows.length === 0) {
@@ -324,6 +369,7 @@ const deleteAdmin = async (req, res) => {
       });
     }
 
+    // Prevent deleting superadmin
     if (adminCheck.rows[0].role === "superadmin") {
       return res.status(403).json({
         success: false,
@@ -332,8 +378,14 @@ const deleteAdmin = async (req, res) => {
     }
 
     const result = await pool.query(
-      "DELETE FROM admins WHERE id = $1 AND role = 'admin', organization_id = $2 RETURNING id, username",
-      [id],
+      `
+      DELETE FROM admins
+      WHERE id = $1
+      AND organization_id = $2
+      AND role = 'admin'
+      RETURNING id, username, email
+      `,
+      [id, organizationId],
     );
 
     if (result.rows.length === 0) {
@@ -346,18 +398,25 @@ const deleteAdmin = async (req, res) => {
     // Audit log
     await pool.query(
       `
-      INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
-      VALUES ($1, $2, $3, $4, $5)
-    `,
+      INSERT INTO audit_logs (
+        action,
+        actor_id,
+        actor_role,
+        details,
+        organization_id
+      )
+      VALUES ($1,$2,$3,$4,$5)
+      `,
       [
         "ADMIN_DELETED",
         superAdminId,
-        "superadmin",
-        {
+        req.user.role,
+        JSON.stringify({
           deleted_admin_id: id,
-          username: result.rows[0].username,
-          organization_id: organizationId,
-        },
+          name: result.rows[0].username,
+          email: result.rows[0].email,
+        }),
+        organizationId,
       ],
     );
 
@@ -367,7 +426,11 @@ const deleteAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Failed to delete admin" });
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete admin",
+    });
   }
 };
 
