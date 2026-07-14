@@ -53,7 +53,7 @@ const SuperAdminDashboard = () => {
           axios.get(`${API_URL}/api/admin/election-settings`, {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get(`${API_URL}/api/super/admins`, {
+          axios.get(`${API_URL}/api/super/get-admins`, {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
         ]);

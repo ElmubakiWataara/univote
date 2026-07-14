@@ -1,7 +1,7 @@
 const pool = require("../config/db");
 
 const getPublicElectionInfo = async (req, res) => {
-  const organizationId = req.query.organization_id || req.user?.organization_id;
+  const organizationId = req.query.organization_id;
 
   if (!organizationId) {
     return res.status(400).json({
@@ -13,12 +13,7 @@ const getPublicElectionInfo = async (req, res) => {
   try {
     const result = await pool.query(
       `
-      SELECT
-        title,
-        logo_url,
-        academic_year,
-        description,
-        is_active
+      SELECT title, logo_url, academic_year, description, is_active
       FROM election_settings
       WHERE organization_id = $1
       `,
@@ -28,7 +23,7 @@ const getPublicElectionInfo = async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "Election settings not found",
+        message: "Election not found",
       });
     }
 

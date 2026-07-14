@@ -93,11 +93,19 @@ const verifyVoterToken = async (req, res) => {
   try {
     const result = await pool.query(
       `
-      SELECT t.id, t.voter_id, t.used, t.expires_at, v.student_id, v.full_name, v.has_voted
-      FROM tokens t
-      JOIN voters v ON t.voter_id = v.id
-      WHERE t.token_value = $1
-    `,
+  SELECT
+    t.id,
+    t.voter_id,
+    t.used,
+    t.expires_at,
+    v.student_id,
+    v.full_name,
+    v.has_voted,
+    v.organization_id
+  FROM tokens t
+  JOIN voters v ON t.voter_id = v.id
+  WHERE t.token_value = $1
+  `,
       [token],
     );
 
@@ -130,6 +138,7 @@ const verifyVoterToken = async (req, res) => {
         id: tokenData.voter_id,
         role: "voter",
         voterId: tokenData.voter_id,
+        organization_id: tokenData.organization_id,
       },
       "15m",
     );
