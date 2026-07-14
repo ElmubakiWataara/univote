@@ -18,11 +18,11 @@ const toggleElection = async (req, res) => {
       `
       UPDATE election_settings
       SET
-        is_active = $1,
-        updated_by = $2,
-        updated_at = NOW()
-      WHERE id = 1 AND organization_id = $3
-      RETURNING is_active
+          is_active = $1,
+          updated_by = $2,
+          updated_at = NOW()
+      WHERE organization_id = $3
+      RETURNING is_active;
       `,
       [is_active, adminId, organizationId],
     );
