@@ -423,7 +423,7 @@ const updateElectionConfig = async (req, res) => {
     const logoUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     const existing = await pool.query(
-      "SELECT * FROM election_settings WHERE id = 1 AND organization_id = $1",
+      "SELECT * FROM election_settings WHERE organization_id = $1",
       [organizationId],
     );
 
@@ -441,8 +441,7 @@ const updateElectionConfig = async (req, res) => {
             logo_url = $4,
             updated_by = $5,
             updated_at = NOW()
-        WHERE id = 1
-        AND organization_id = $6
+        WHERE organization_id = $6
         RETURNING *
         `,
       [
@@ -454,6 +453,13 @@ const updateElectionConfig = async (req, res) => {
         organizationId,
       ],
     );
+
+    if (!current) {
+      return res.status(404).json({
+        success: false,
+        message: "Election settings not found for this organization",
+      });
+    }
 
     await pool.query(
       `

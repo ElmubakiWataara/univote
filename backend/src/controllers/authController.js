@@ -121,6 +121,22 @@ const verifyVoterToken = async (req, res) => {
         .json({ success: false, message: "Token already used" });
     }
 
+    const electionResult = await pool.query(
+      `
+      SELECT is_active
+      FROM election_settings
+      WHERE organization_id = $1
+      `,
+      [tokenData.organization_id],
+    );
+
+    if (!electionResult.rows[0]?.is_active) {
+      return res.status(403).json({
+        success: false,
+        message: "Election is currently closed.",
+      });
+    }
+
     if (new Date(tokenData.expires_at) < new Date()) {
       return res
         .status(400)
