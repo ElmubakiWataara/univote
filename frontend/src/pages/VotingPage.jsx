@@ -175,6 +175,24 @@ const VotingPage = () => {
       </div>
     );
 
+  if (positions.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-6">📭</div>
+          <h2 className="text-3xl font-bold text-gray-800">
+            No Candidates Available
+          </h2>
+          <p className="text-gray-600 mt-4 max-w-md mx-auto">
+            There are no candidates registered for this election yet.
+            <br />
+            Please contact your election administrator.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (message) {
     return (
       <div className="min-h-screen bg-emerald-50 flex items-center justify-center">
