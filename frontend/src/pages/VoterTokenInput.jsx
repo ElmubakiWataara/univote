@@ -11,32 +11,32 @@ const VoterTokenInput = () => {
 
   const [election, setElection] = useState({
     title: "",
-    logo: "", // This will be relative path like "/uploads/xxx.jpg"
+    logo: "",
   });
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchElectionSettings();
-  }, []);
+  // useEffect(() => {
+  //   fetchElectionSettings();
+  // }, []);
 
-  const fetchElectionSettings = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/public/election-info`);
+  // const fetchElectionSettings = async () => {
+  //   try {
+  //     const res = await axios.get(`${API_URL}/api/public/election-info`);
 
-      if (res.data.success) {
-        const logoUrl = res.data.election.logo_url || "";
+  //     if (res.data.success) {
+  //       const logoUrl = res.data.election.logo_url || "";
 
-        setElection({
-          title: res.data.election.title || "Voting Portal",
-          logo: logoUrl,
-        });
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  //       setElection({
+  //         title: res.data.election.title || "Voting Portal",
+  //         logo: logoUrl,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();

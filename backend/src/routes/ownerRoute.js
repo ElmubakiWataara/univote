@@ -4,6 +4,8 @@ const { authenticate, authorizeRole } = require("../middleware/auth");
 const { ownerLogin } = require("../controllers/ownerController");
 const { registerOrganization } = require("../controllers/ownerController");
 const { getOrganizations } = require("../controllers/ownerController");
+const { updateOrganization } = require("../controllers/ownerController");
+const { deleteOrganization } = require("../controllers/ownerController");
 
 // Only Owners can register organizations
 router.post(
@@ -21,5 +23,18 @@ router.get(
 
 router.post("/login", ownerLogin);
 router.post("/register-organization", registerOrganization); // Public for now or protected later
+
+router.put(
+  "/organizations/:id",
+  authenticate,
+  authorizeRole(["owner"]),
+  updateOrganization,
+);
+router.delete(
+  "/organizations/:id",
+  authenticate,
+  authorizeRole(["owner"]),
+  deleteOrganization,
+);
 
 module.exports = router;

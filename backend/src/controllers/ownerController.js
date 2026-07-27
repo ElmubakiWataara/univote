@@ -147,8 +147,167 @@ const getOrganizations = async (req, res) => {
   }
 };
 
+// Update Organization
+const updateOrganization = async (req, res) => {
+  const { id } = req.params;
+  const { name, email, phone, status } = req.body;
+  const ownerId = req.user.id;
+
+  try {
+    // Check if organization exists and is not soft-deleted
+    const existing = await pool.query(
+      "SELECT * FROM organizations WHERE id = $1 AND deleted_at IS NULL",
+      [id],
+    );
+
+    if (existing.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found",
+      });
+    }
+
+    // Validate status if provided
+    if (status && !["pending", "active", "suspended"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status. Must be pending, active, or suspended",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      UPDATE organizations
+      SET 
+        name = COALESCE($1, name),
+        email = COALESCE($2, email),
+        phone = COALESCE($3, phone),
+        status = COALESCE($4, status),
+        updated_at = NOW()
+      WHERE id = $5 AND deleted_at IS NULL
+      RETURNING id, name, email, phone, status, created_at, updated_at
+      `,
+      [name || null, email || null, phone || null, status || null, id],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found",
+      });
+    }
+
+    // Audit log
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+      `,
+      [
+        "ORGANIZATION_UPDATED",
+        ownerId,
+        "owner",
+        JSON.stringify({
+          organization_id: id,
+          name,
+          email,
+          phone,
+          status,
+        }),
+      ],
+    );
+
+    res.json({
+      success: true,
+      message: "Organization updated successfully",
+      organization: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Update organization error:", error);
+
+    if (error.code === "23505") {
+      return res.status(409).json({
+        success: false,
+        message: "Email already exists",
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to update organization",
+    });
+  }
+};
+
+// Soft Delete Organization
+const deleteOrganization = async (req, res) => {
+  const { id } = req.params;
+  const ownerId = req.user.id;
+
+  try {
+    // Check if election is currently active
+    const electionCheck = await pool.query(
+      "SELECT is_active FROM election_settings WHERE organization_id = $1",
+      [id],
+    );
+
+    if (electionCheck.rows[0]?.is_active === true) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cannot delete organization while election is active. Please close the election first.",
+      });
+    }
+
+    // Soft delete
+    const result = await pool.query(
+      `
+      UPDATE organizations
+      SET deleted_at = NOW(), updated_at = NOW()
+      WHERE id = $1 AND deleted_at IS NULL
+      RETURNING id, name
+      `,
+      [id],
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found or already deleted",
+      });
+    }
+
+    // Audit log
+    await pool.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+      `,
+      [
+        "ORGANIZATION_DELETED",
+        ownerId,
+        "owner",
+        JSON.stringify({ organization_id: id, name: result.rows[0].name }),
+      ],
+    );
+
+    res.json({
+      success: true,
+      message: "Organization deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete organization",
+    });
+  }
+};
+
 module.exports = {
   ownerLogin,
   registerOrganization,
   getOrganizations,
+  updateOrganization,
+  deleteOrganization,
 };
