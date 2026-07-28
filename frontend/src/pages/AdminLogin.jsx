@@ -48,7 +48,7 @@ const AdminLogin = () => {
       <div className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md">
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold text-gray-900">Admin Login</h1>
-          <p className="text-gray-500 mt-3">University Voting System</p>
+          <p className="text-gray-500 mt-3">Esofa Election System</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -93,12 +93,6 @@ const AdminLogin = () => {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-
-        <div className="text-center mt-8">
-          <a href="/" className="text-indigo-600 hover:underline">
-            ← Back to Student Voting
-          </a>
-        </div>
       </div>
     </div>
   );

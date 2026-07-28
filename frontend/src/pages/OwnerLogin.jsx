@@ -81,12 +81,6 @@ const OwnerLogin = () => {
             {loading ? "Logging in..." : "Login as Owner"}
           </button>
         </form>
-
-        <div className="text-center mt-8">
-          <a href="/admin/login" className="text-indigo-600 hover:underline">
-            Back to Admin Login
-          </a>
-        </div>
       </div>
     </div>
   );

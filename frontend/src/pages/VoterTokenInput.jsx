@@ -17,27 +17,6 @@ const VoterTokenInput = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   fetchElectionSettings();
-  // }, []);
-
-  // const fetchElectionSettings = async () => {
-  //   try {
-  //     const res = await axios.get(`${API_URL}/api/public/election-info`);
-
-  //     if (res.data.success) {
-  //       const logoUrl = res.data.election.logo_url || "";
-
-  //       setElection({
-  //         title: res.data.election.title || "Voting Portal",
-  //         logo: logoUrl,
-  //       });
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -139,15 +118,6 @@ const VoterTokenInput = () => {
             {loading ? "Verifying..." : "Continue to Vote"}
           </button>
         </form>
-
-        <div className="mt-8 text-center">
-          <a
-            href="/admin/login"
-            className="text-indigo-600 hover:text-indigo-700 font-medium"
-          >
-            Administrator Login →
-          </a>
-        </div>
       </div>
     </div>
   );

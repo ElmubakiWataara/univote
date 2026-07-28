@@ -304,10 +304,44 @@ const deleteOrganization = async (req, res) => {
   }
 };
 
+//Global statistics
+const getPlatformStats = async (req, res) => {
+  try {
+    const [voters, votes, admins, candidates, organizations] =
+      await Promise.all([
+        pool.query("SELECT COUNT(*) as total FROM voters"),
+        pool.query("SELECT COUNT(*) as total FROM votes"),
+        pool.query("SELECT COUNT(*) as total FROM admins"),
+        pool.query("SELECT COUNT(*) as total FROM candidates"),
+        pool.query(
+          "SELECT COUNT(*) as total FROM organizations WHERE deleted_at IS NULL",
+        ),
+      ]);
+
+    res.json({
+      success: true,
+      stats: {
+        totalOrganizations: parseInt(organizations.rows[0].total),
+        totalVoters: parseInt(voters.rows[0].total),
+        totalVotes: parseInt(votes.rows[0].total),
+        totalAdmins: parseInt(admins.rows[0].total),
+        totalCandidates: parseInt(candidates.rows[0].total),
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch platform statistics",
+    });
+  }
+};
+
 module.exports = {
   ownerLogin,
   registerOrganization,
   getOrganizations,
   updateOrganization,
   deleteOrganization,
+  getPlatformStats,
 };

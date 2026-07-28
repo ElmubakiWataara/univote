@@ -66,6 +66,7 @@ app.use("/api/vote", voteRoutes);
 app.use("/api/super", superAdminRoutes);
 app.use("/api/owner", ownerRoutes);
 
+
 // Global error handler (must be last)
 app.use(errorHandler);
 

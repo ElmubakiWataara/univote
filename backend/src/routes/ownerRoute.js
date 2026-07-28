@@ -6,6 +6,7 @@ const { registerOrganization } = require("../controllers/ownerController");
 const { getOrganizations } = require("../controllers/ownerController");
 const { updateOrganization } = require("../controllers/ownerController");
 const { deleteOrganization } = require("../controllers/ownerController");
+const { getPlatformStats } = require("../controllers/ownerController");
 
 // Only Owners can register organizations
 router.post(
@@ -36,5 +37,7 @@ router.delete(
   authorizeRole(["owner"]),
   deleteOrganization,
 );
+
+router.get("/stats", authenticate, authorizeRole(["owner"]), getPlatformStats);
 
 module.exports = router;
