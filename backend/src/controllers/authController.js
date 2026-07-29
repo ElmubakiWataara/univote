@@ -14,21 +14,25 @@ const adminLogin = async (req, res) => {
 
   try {
     let result;
+    let isOrganization = false;
 
-    // Try SuperAdmin first (email)
+    // 1. Try SuperAdmin (Organization) first
     if (email) {
       result = await pool.query(
         `
-        SELECT id, email AS username, password_hash, 'superadmin' AS role,  id AS organization_id
+        SELECT id, email AS username, password_hash, 'superadmin' AS role, id AS organization_id, status
         FROM organizations
-        WHERE email = $1
-        AND status = 'active';
+        WHERE email = $1 AND deleted_at IS NULL
         `,
         [email],
       );
+
+      if (result.rows.length > 0) {
+        isOrganization = true;
+      }
     }
 
-    // If not found, try regular Admin (email)
+    // 2. If not found, try regular Admin
     if (!result || result.rows.length === 0) {
       result = await pool.query(
         `
@@ -48,6 +52,35 @@ const adminLogin = async (req, res) => {
     }
 
     const user = result.rows[0];
+
+    // 3. If it's an organization, check status BEFORE password
+    if (isOrganization) {
+      if (user.status === "pending") {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Your organization is still pending approval. Please contact the platform Admin.",
+        });
+      }
+
+      if (user.status === "suspended") {
+        return res.status(403).json({
+          success: false,
+          message:
+            "Your organization access has been suspended. Please contact the platform Admin.",
+        });
+      }
+
+      // Only allow login if status is active
+      if (user.status !== "active") {
+        return res.status(403).json({
+          success: false,
+          message: "Your organization is not active.",
+        });
+      }
+    }
+
+    // 4. Check password
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
@@ -57,6 +90,7 @@ const adminLogin = async (req, res) => {
       });
     }
 
+    // 5. Generate token
     const token = generateToken({
       id: user.id,
       username: user.username,

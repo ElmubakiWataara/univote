@@ -59,7 +59,7 @@ const ownerLogin = async (req, res) => {
   }
 };
 
-// Register Organization/SuperAdmin
+// Register Organization
 const registerOrganization = async (req, res) => {
   const { name, email, phone, password } = req.body;
   const ownerId = req.user.id;

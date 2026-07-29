@@ -187,7 +187,7 @@ const ManageOrganizations = () => {
                     </td>
                   </tr>
                 ) : (
-                  organizations.map((org) => (
+                  organizations.map((org, index) => (
                     <tr
                       key={org.id}
                       className="hover:bg-gray-50 cursor-pointer"
