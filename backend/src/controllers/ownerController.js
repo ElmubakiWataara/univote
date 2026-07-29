@@ -337,6 +337,106 @@ const getPlatformStats = async (req, res) => {
   }
 };
 
+const resetOrganizationElection = async (req, res) => {
+  const { id } = req.params;
+  const ownerId = req.user.id;
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // 1. Check organization exists
+    const orgCheck = await client.query(
+      "SELECT id, name FROM organizations WHERE id = $1 AND deleted_at IS NULL",
+      [id],
+    );
+
+    if (orgCheck.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found",
+      });
+    }
+
+    // 2. Safety: Do not allow reset if election is currently active
+    const electionCheck = await client.query(
+      "SELECT is_active FROM election_settings WHERE organization_id = $1",
+      [id],
+    );
+
+    if (electionCheck.rows[0]?.is_active === true) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cannot reset while election is active. Please close the election first.",
+      });
+    }
+
+    // 3. Full clean-up (order is important because of foreign keys)
+    await client.query("DELETE FROM votes WHERE organization_id = $1", [id]);
+    await client.query("DELETE FROM tokens WHERE organization_id = $1", [id]);
+    await client.query("DELETE FROM candidates WHERE organization_id = $1", [
+      id,
+    ]);
+    await client.query("DELETE FROM voters WHERE organization_id = $1", [id]);
+    await client.query("DELETE FROM admins WHERE organization_id = $1", [id]);
+
+    // 4. Reset election_settings to default
+    await client.query(
+      `
+      UPDATE election_settings
+      SET 
+        is_active = FALSE,
+        title = NULL,
+        logo_url = NULL,
+        academic_year = NULL,
+        description = NULL,
+        updated_by = NULL,
+        updated_at = NOW()
+      WHERE organization_id = $1
+      `,
+      [id],
+    );
+
+    // 5. Audit log
+    await client.query(
+      `
+      INSERT INTO audit_logs (action, actor_id, actor_role, details)
+      VALUES ($1, $2, $3, $4)
+      `,
+      [
+        "ORGANIZATION_FULL_RESET",
+        ownerId,
+        "owner",
+        JSON.stringify({
+          organization_id: id,
+          organization_name: orgCheck.rows[0].name,
+          note: "All election data (voters, candidates, votes, tokens, admins) has been cleared",
+        }),
+      ],
+    );
+
+    await client.query("COMMIT");
+
+    res.json({
+      success: true,
+      message: `Organization "${orgCheck.rows[0].name}" has been fully reset. All data cleared.`,
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Full reset error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to reset organization data",
+    });
+  } finally {
+    client.release();
+  }
+};
+
 module.exports = {
   ownerLogin,
   registerOrganization,
@@ -344,4 +444,5 @@ module.exports = {
   updateOrganization,
   deleteOrganization,
   getPlatformStats,
+  resetOrganizationElection,
 };

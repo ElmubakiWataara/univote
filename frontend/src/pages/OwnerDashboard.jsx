@@ -41,7 +41,6 @@ const OwnerDashboard = () => {
 
         setOrganizations(orgRes.data.organizations || []);
         setStats(statsRes.data.stats || {});
-        console.log("Stats Response:", statsRes.data);
       } catch (err) {
         console.error(err);
         setError("Failed to load dashboard data");
