@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import OwnerLayout from "../components/OwnerLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const ManageOrganizations = () => {
   const [organizations, setOrganizations] = useState([]);
@@ -15,6 +16,12 @@ const ManageOrganizations = () => {
     phone: "",
     password: "",
   });
+  //for logs
+  const [showLogs, setShowLogs] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logsOrg, setLogsOrg] = useState(null);
+
   const [submitting, setSubmitting] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [success, setSuccess] = useState("");
@@ -25,12 +32,9 @@ const ManageOrganizations = () => {
   const fetchOrganizations = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        "http://localhost:3000/api/owner/organizations",
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        },
-      );
+      const res = await axios.get(`${API_URL}/api/owner/organizations`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       setOrganizations(res.data.organizations || []);
     } catch (err) {
       console.error(err);
@@ -143,6 +147,27 @@ const ManageOrganizations = () => {
       setError(err.response?.data?.message || "Failed to reset election data");
     } finally {
       setResetting(false);
+    }
+  };
+
+  const openAuditLogs = async (org) => {
+    setLogsOrg(org);
+    setShowLogs(true);
+    setLogsLoading(true);
+    setError("");
+
+    try {
+      const res = await axios.get(
+        `http://localhost:3000/api/owner/organizations/${org.id}/audit-logs`,
+        {
+          headers: { Authorization: `Bearer ${authToken}` },
+        },
+      );
+      setLogs(res.data.logs || []);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load audit logs");
+    } finally {
+      setLogsLoading(false);
     }
   };
 
@@ -313,6 +338,12 @@ const ManageOrganizations = () => {
                   {new Date(selectedOrg.updated_at).toLocaleString()}
                 </span>
               </div>
+              <button
+                onClick={() => openAuditLogs(selectedOrg)}
+                className="w-full py-3 bg-gray-800 text-white font-medium rounded-2xl hover:bg-gray-900"
+              >
+                View Audit Logs
+              </button>
             </div>
 
             <div className="mt-8 space-y-3">
@@ -431,6 +462,102 @@ const ManageOrganizations = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Audit Logs Modal */}
+      {showLogs && logsOrg && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="p-6 border-b flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold">Audit Logs</h2>
+                <p className="text-gray-500 text-sm mt-1">
+                  {logsOrg.name} (ID: {logsOrg.id})
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowLogs(false);
+                  setLogs([]);
+                  setLogsOrg(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-auto p-6">
+              {logsLoading ? (
+                <div className="text-center py-16 text-gray-500">
+                  Loading logs...
+                </div>
+              ) : logs.length === 0 ? (
+                <div className="text-center py-16 text-gray-500">
+                  No audit logs found for this organization
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                        Time
+                      </th>
+                      <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                        Action
+                      </th>
+                      <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                        Actor
+                      </th>
+                      <th className="text-left py-4 px-6 text-sm font-medium text-gray-500">
+                        Details
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {logs.map((log) => (
+                      <tr key={log.id} className="hover:bg-gray-50">
+                        <td className="py-4 px-6 text-sm text-gray-500 whitespace-nowrap">
+                          {new Date(log.created_at).toLocaleString()}
+                        </td>
+                        <td className="py-4 px-6 font-medium text-gray-900">
+                          {log.action}
+                        </td>
+                        <td className="py-4 px-6 text-sm">
+                          <span className="capitalize">{log.actor_role}</span>
+                          <span className="text-gray-400 ml-1">
+                            #{log.actor_id}
+                          </span>
+                        </td>
+                        <td className="py-4 px-6 text-sm text-gray-600 max-w-md break-words">
+                          {typeof log.details === "string"
+                            ? log.details
+                            : JSON.stringify(log.details)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t text-right">
+              <button
+                onClick={() => {
+                  setShowLogs(false);
+                  setLogs([]);
+                  setLogsOrg(null);
+                }}
+                className="px-8 py-3 border border-gray-300 rounded-2xl font-medium hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -8,6 +8,7 @@ const { updateOrganization } = require("../controllers/ownerController");
 const { deleteOrganization } = require("../controllers/ownerController");
 const { getPlatformStats } = require("../controllers/ownerController");
 const { resetOrganizationElection } = require("../controllers/ownerController");
+const { getOrganizationAuditLogs } = require("../controllers/ownerController");
 
 // Only Owners can register organizations
 router.post(
@@ -47,5 +48,12 @@ router.post(
 );
 
 router.get("/stats", authenticate, authorizeRole(["owner"]), getPlatformStats);
+
+router.get(
+  "/organizations/:id/audit-logs",
+  authenticate,
+  authorizeRole(["owner"]),
+  getOrganizationAuditLogs,
+);
 
 module.exports = router;

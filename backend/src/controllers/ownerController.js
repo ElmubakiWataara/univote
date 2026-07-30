@@ -480,6 +480,49 @@ const resetOrganizationElection = async (req, res) => {
   }
 };
 
+const getOrganizationAuditLogs = async (req, res) => {
+  const { id } = req.params;
+  const { limit = 100 } = req.query;
+
+  try {
+    // Optional: verify organization exists
+    const orgCheck = await pool.query(
+      "SELECT id, name FROM organizations WHERE id = $1 AND deleted_at IS NULL",
+      [id],
+    );
+
+    if (orgCheck.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Organization not found",
+      });
+    }
+
+    const result = await pool.query(
+      `
+      SELECT id, action, actor_id, actor_role, details, created_at
+      FROM audit_logs
+      WHERE organization_id = $1
+      ORDER BY created_at DESC
+      LIMIT $2
+      `,
+      [id, limit],
+    );
+
+    res.json({
+      success: true,
+      organization: orgCheck.rows[0],
+      logs: result.rows,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch audit logs",
+    });
+  }
+};
+
 module.exports = {
   ownerLogin,
   registerOrganization,
@@ -488,4 +531,5 @@ module.exports = {
   deleteOrganization,
   getPlatformStats,
   resetOrganizationElection,
+  getOrganizationAuditLogs,
 };

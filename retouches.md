@@ -9,19 +9,19 @@
 
 2. **Organization Status Control (already started)**
    <!-- - Activate / Suspend / Pending from the table (you already have this) -->
-   - Ability to see why an organization was suspended (optional note)
+   <!-- - Ability to see why an organization was suspended (optional note) -->
 
 3. **View Election Status of each Organization**
    <!-- - Whether the election is currently Open or Closed -->
    <!-- - Number of candidates and voters per organization (open sub page for a tapped organization) -->
 
 4. **Reset / Clear Election Data** (Dangerous but useful)
-   - Ability for Owner to reset votes, tokens, and has_voted flags for a specific organization (with strong confirmation)
+   <!-- - Ability for Owner to reset votes, tokens, and has_voted flags for a specific organization (with strong confirmation) -->
 
 ### Medium Priority
 
 5. **Password Reset for SuperAdmin**
-   - Owner can generate a new password for an organization and view it once
+   <!-- - Owner can generate a new password for an organization and view it once -->
 
 6. **Organization Activity Log**
    - See recent actions done by a specific SuperAdmin (filtered audit logs)
