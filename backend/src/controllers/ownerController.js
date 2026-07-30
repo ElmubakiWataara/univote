@@ -150,7 +150,7 @@ const getOrganizations = async (req, res) => {
 // Update Organization
 const updateOrganization = async (req, res) => {
   const { id } = req.params;
-  const { name, email, phone, status } = req.body;
+  const { name, email, phone, status, password } = req.body;
   const ownerId = req.user.id;
 
   try {
@@ -175,19 +175,61 @@ const updateOrganization = async (req, res) => {
       });
     }
 
+    // Validate password if provided
+    if (password && password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    // Build dynamic update
+    let updateFields = [];
+    let values = [];
+    let paramCount = 1;
+
+    if (name) {
+      updateFields.push(`name = $${paramCount++}`);
+      values.push(name);
+    }
+    if (email) {
+      updateFields.push(`email = $${paramCount++}`);
+      values.push(email);
+    }
+    if (phone !== undefined) {
+      updateFields.push(`phone = $${paramCount++}`);
+      values.push(phone || null);
+    }
+    if (status) {
+      updateFields.push(`status = $${paramCount++}`);
+      values.push(status);
+    }
+
+    // Only update password if a new one is provided
+    if (password && password.trim() !== "") {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateFields.push(`password_hash = $${paramCount++}`);
+      values.push(hashedPassword);
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No fields to update",
+      });
+    }
+
+    updateFields.push(`updated_at = NOW()`);
+    values.push(id);
+
     const result = await pool.query(
       `
       UPDATE organizations
-      SET 
-        name = COALESCE($1, name),
-        email = COALESCE($2, email),
-        phone = COALESCE($3, phone),
-        status = COALESCE($4, status),
-        updated_at = NOW()
-      WHERE id = $5 AND deleted_at IS NULL
+      SET ${updateFields.join(", ")}
+      WHERE id = $${paramCount} AND deleted_at IS NULL
       RETURNING id, name, email, phone, status, created_at, updated_at
       `,
-      [name || null, email || null, phone || null, status || null, id],
+      values,
     );
 
     if (result.rows.length === 0) {
@@ -213,6 +255,7 @@ const updateOrganization = async (req, res) => {
           email,
           phone,
           status,
+          password_changed: !!(password && password.trim() !== ""),
         }),
       ],
     );

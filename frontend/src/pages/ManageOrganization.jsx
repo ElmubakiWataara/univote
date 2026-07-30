@@ -13,6 +13,7 @@ const ManageOrganizations = () => {
     name: "",
     email: "",
     phone: "",
+    password: "",
   });
   const [submitting, setSubmitting] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -49,6 +50,7 @@ const ManageOrganizations = () => {
       name: org.name,
       email: org.email,
       phone: org.phone || "",
+      password: "", //always empty
     });
     setError("");
     setSuccess("");
@@ -392,6 +394,24 @@ const ManageOrganizations = () => {
                   }
                   className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={editForm.password}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, password: e.target.value })
+                  }
+                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                  placeholder="Leave blank to keep current password"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Leave blank if you don’t want to change the password
+                </p>
               </div>
 
               <div className="flex gap-4 pt-4">
