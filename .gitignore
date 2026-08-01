@@ -13,6 +13,9 @@ frontend/build/
 dist-ssr
 *.local
 .env
+.env.development
+.env.production
+
 
 config/
 

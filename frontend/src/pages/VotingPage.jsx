@@ -176,6 +176,10 @@ const VotingPage = () => {
     );
 
   if (positions.length === 0) {
+    setTimeout(() => {
+      logout();
+      navigate("/");
+    }, 3000);
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -187,6 +191,9 @@ const VotingPage = () => {
             There are no candidates registered for this election yet.
             <br />
             Please contact your election administrator.
+          </p>
+          <p className="text-sm text-gray-400 mt-6">
+            Returning to token screen...
           </p>
         </div>
       </div>

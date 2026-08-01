@@ -24,7 +24,7 @@
    <!-- - Owner can generate a new password for an organization and view it once -->
 
 6. **Organization Activity Log**
-   - See recent actions done by a specific SuperAdmin (filtered audit logs)
+   <!-- - See recent actions done by a specific SuperAdmin (filtered audit logs) -->
 
 7. **Search & Filter**
    - Search organizations by name or email
