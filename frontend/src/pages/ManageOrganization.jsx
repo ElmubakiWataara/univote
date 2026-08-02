@@ -70,7 +70,7 @@ const ManageOrganizations = () => {
 
     try {
       await axios.put(
-        `http://localhost:3000/api/owner/organizations/${editingOrg.id}`,
+        `${API_URL}/api/owner/organizations/${editingOrg.id}`,
         editForm,
         { headers: { Authorization: `Bearer ${authToken}` } },
       );
@@ -88,7 +88,7 @@ const ManageOrganizations = () => {
   const handleStatusChange = async (id, newStatus) => {
     try {
       await axios.put(
-        `http://localhost:3000/api/owner/organizations/${id}`,
+        `${API_URL}/api/owner/organizations/${id}`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${authToken}` } },
       );
@@ -108,12 +108,9 @@ const ManageOrganizations = () => {
       return;
 
     try {
-      await axios.delete(
-        `http://localhost:3000/api/owner/organizations/${id}`,
-        {
-          headers: { Authorization: `Bearer ${authToken}` },
-        },
-      );
+      await axios.delete(`${API_URL}/api/owner/organizations/${id}`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
       setSuccess(`Organization "${name}" deleted successfully`);
       setSelectedOrg(null);
       fetchOrganizations();
@@ -136,7 +133,7 @@ const ManageOrganizations = () => {
 
     try {
       const res = await axios.post(
-        `http://localhost:3000/api/owner/organizations/${org.id}/reset`,
+        `${API_URL}/api/owner/organizations/${org.id}/reset`,
         {},
         { headers: { Authorization: `Bearer ${authToken}` } },
       );
@@ -158,7 +155,7 @@ const ManageOrganizations = () => {
 
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/owner/organizations/${org.id}/audit-logs`,
+        `${API_URL}/api/owner/organizations/${org.id}/audit-logs`,
         {
           headers: { Authorization: `Bearer ${authToken}` },
         },

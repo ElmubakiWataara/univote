@@ -1,8 +1,8 @@
-// frontend/src/pages/OwnerLogin.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const OwnerLogin = () => {
   const [username, setUsername] = useState("");
@@ -19,7 +19,7 @@ const OwnerLogin = () => {
     setError("");
 
     try {
-      const res = await axios.post("http://localhost:3000/api/owner/login", {
+      const res = await axios.post(`${API_URL}/api/owner/login`, {
         username,
         password,
       });
