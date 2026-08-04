@@ -28,7 +28,11 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Security & Middleware
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 
 app.use(
   cors({
@@ -54,7 +58,7 @@ app.use(limiter);
 // Serve uploads
 app.use(
   "/uploads",
-  express.static(path.join(__dirname, "uploads"), {
+  express.static(path.join(__dirname, "../uploads"), {
     setHeaders: (res) => {
       res.set("Cache-Control", "public, max-age=31536000");
     },

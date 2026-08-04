@@ -6,6 +6,7 @@ const {
   isValidEmail,
   isValidStudentId,
 } = require("../helpers/stringHelpers");
+const { upload: uploadFile } = require("../services/uploadService");
 
 const updateVoter = async (req, res) => {
   const { id } = req.params;
@@ -360,8 +361,10 @@ const addCandidate = async (req, res) => {
   yes_or_no = yes_or_no ? yes_or_no.trim().toUpperCase() : null;
 
   try {
-    const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
-
+    let photoUrl = null;
+    if (req.file) {
+      photoUrl = await uploadFile(req.file);
+    }
     const result = await pool.query(
       `
       INSERT INTO candidates (name, position, bio, photo_url, yes_or_no, organization_id)

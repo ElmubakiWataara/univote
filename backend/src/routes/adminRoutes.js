@@ -19,18 +19,6 @@ const {
   getElectionSettings,
 } = require("../controllers/adminController");
 
-// // Setup multer for photo upload
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, "uploads/");
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, Date.now() + "-" + file.originalname);
-//   },
-// });
-
-// const upload = multer({ storage });
-
 // Protect all admin routes
 router.use(authenticate);
 router.use(authorizeRole(["admin", "superadmin"]));

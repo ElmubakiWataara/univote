@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const pool = require("../config/db");
+const { upload } = require("../services/uploadService");
 
 const toggleElection = async (req, res) => {
   const { is_active } = req.body;
@@ -420,7 +421,14 @@ const updateElectionConfig = async (req, res) => {
   let { title, academic_year, description } = req.body;
 
   try {
-    const logoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    let logoUrl = null;
+    if (req.file) {
+      logoUrl = await upload(req.file);
+    }
+    // const logoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    // let photoUrl = null;
+    // if (req.file) {
+    //   photoUrl = await upload(req.file);
 
     const existing = await pool.query(
       "SELECT * FROM election_settings WHERE organization_id = $1",

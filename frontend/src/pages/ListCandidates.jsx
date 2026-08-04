@@ -41,11 +41,17 @@ const ListCandidates = () => {
     fetchCandidates();
   }, []);
 
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http")) return url; // Cloudinary
+    return `${API_URL}${url}`; // local /uploads/...
+  };
+
   const CandidateImage = ({ photo_url, name }) => (
     <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200">
       {photo_url ? (
         <img
-          src={photo_url}
+          src={getImageUrl(photo_url)}
           alt={name}
           className="w-full h-full object-cover"
           onError={(e) => {
