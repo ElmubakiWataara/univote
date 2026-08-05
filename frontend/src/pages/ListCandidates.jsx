@@ -210,7 +210,7 @@ const ListCandidates = () => {
 
           {filteredCandidates.length === 0 && !loading && (
             <div className="text-center py-20 text-gray-500">
-              No candidates found.
+              No candidates found .
             </div>
           )}
         </div>
