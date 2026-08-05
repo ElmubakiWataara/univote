@@ -115,29 +115,43 @@ const ResultsPage = () => {
     doc.save(`Election_Results_${new Date().toISOString().slice(0, 10)}.pdf`);
   };
 
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http")) return url; // Cloudinary
+    return `${API_URL}${url}`; // local /uploads/...
+  };
+
   // Reusable Image Component
-  const CandidateImage = ({ photo_url, name, size = "16" }) => (
-    <div
-      className={`w-${size} h-${size} bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0`}
-    >
-      {photo_url ? (
-        <img
-          src={photo_url}
-          alt={name}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            console.error(`Failed image: ${name}`, photo_url);
-            e.target.onerror = null;
-            e.target.src = "https://via.placeholder.com/64x64?text=No+Photo";
-          }}
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-4xl text-gray-400">
+  const CandidateImage = ({ photo_url, name, size = "16" }) => {
+    const [failed, setFailed] = useState(false);
+    const src = getImageUrl(photo_url);
+
+    // Tailwind needs full class names
+    const sizeClass = size === "20" ? "w-20 h-20" : "w-16 h-16";
+
+    if (!src || failed) {
+      return (
+        <div
+          className={`${sizeClass} bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center text-4xl text-gray-400`}
+        >
           👤
         </div>
-      )}
-    </div>
-  );
+      );
+    }
+
+    return (
+      <div
+        className={`${sizeClass} bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0`}
+      >
+        <img
+          src={src}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={() => setFailed(true)}
+        />
+      </div>
+    );
+  };
 
   if (loading) {
     return (

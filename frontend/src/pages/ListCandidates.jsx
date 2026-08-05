@@ -1,4 +1,3 @@
-// frontend/src/pages/ListCandidates.jsx
 import { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
@@ -47,25 +46,29 @@ const ListCandidates = () => {
     return `${API_URL}${url}`; // local /uploads/...
   };
 
-  const CandidateImage = ({ photo_url, name }) => (
-    <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200">
-      {photo_url ? (
+  const CandidateImage = ({ photo_url, name }) => {
+    const [failed, setFailed] = useState(false);
+    const src = getImageUrl(photo_url);
+
+    if (!src || failed) {
+      return (
+        <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200 flex items-center justify-center text-3xl text-gray-400">
+          👤
+        </div>
+      );
+    }
+
+    return (
+      <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200">
         <img
-          src={getImageUrl(photo_url)}
+          src={src}
           alt={name}
           className="w-full h-full object-cover"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src = "https://via.placeholder.com/56x56?text=No+Photo";
-          }}
+          onError={() => setFailed(true)}
         />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-3xl text-gray-400">
-          📸
-        </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  };
 
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Delete candidate "${name}"?`)) return;
