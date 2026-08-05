@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import OwnerLayout from "../components/OwnerLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import API_URL from "../config/api";
 
 const OwnerDashboard = () => {
   const [organizations, setOrganizations] = useState([]);
@@ -31,10 +32,10 @@ const OwnerDashboard = () => {
 
       try {
         const [orgRes, statsRes] = await Promise.all([
-          axios.get("http://localhost:3000/api/owner/organizations", {
+          axios.get(`${API_URL}/api/owner/organizations`, {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
-          axios.get("http://localhost:3000/api/owner/stats", {
+          axios.get(`${API_URL}/api/owner/stats`, {
             headers: { Authorization: `Bearer ${authToken}` },
           }),
         ]);

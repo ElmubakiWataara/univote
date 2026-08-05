@@ -1,4 +1,3 @@
-// frontend/src/pages/ManageOrganizations.jsx
 import { useState, useEffect } from "react";
 import OwnerLayout from "../components/OwnerLayout";
 import axios from "axios";
