@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../config/api";
+import { none } from "../../../backend/src/middleware/uploadElectionLogo";
 
 const VotingPage = () => {
   const [positions, setPositions] = useState([]);
@@ -16,26 +17,35 @@ const VotingPage = () => {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
 
-  const CandidateImage = ({ photo_url, name }) => (
-    <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200">
-      {photo_url ? (
-        <img
-          src={photo_url}
-          alt={name}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            console.error(`Failed image: ${name}`, photo_url);
-            e.target.onerror = null;
-            e.target.src = "https://via.placeholder.com/56x56?text=No+Photo";
-          }}
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-3xl text-gray-400">
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http")) return url; // Cloudinary
+    return `${API_URL}${url}`; // local /uploads/...
+  };
+
+  const CandidateImage = ({ photo_url, name }) => {
+    const [failed, setFailed] = useState(false);
+    const src = getImageUrl(photo_url);
+
+    if (!src || failed) {
+      return (
+        <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200 flex items-center justify-center text-3xl text-gray-400">
           📸
         </div>
-      )}
-    </div>
-  );
+      );
+    }
+
+    return (
+      <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200">
+        <img
+          src={src}
+          alt={name}
+          className="w-full h-full object-cover"
+          onError={() => setFailed(true)}
+        />
+      </div>
+    );
+  };
 
   useEffect(() => {
     if (!token) {
