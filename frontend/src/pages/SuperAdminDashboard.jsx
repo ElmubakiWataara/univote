@@ -125,6 +125,12 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http")) return url; // Cloudinary
+    return `${API_URL}${url}`; // local /uploads/...
+  };
+
   // Initial load
   useEffect(() => {
     fetchSuperAdminData();
@@ -148,16 +154,12 @@ const SuperAdminDashboard = () => {
           <div className="flex items-center gap-6">
             {stats.logoUrl ? (
               <img
-                src={
-                  stats.logoUrl.startsWith("/")
-                    ? stats.logoUrl
-                    : `/uploads${stats.logoUrl.startsWith("/") ? "" : "/"}${stats.logoUrl}`
-                }
+                src={getImageUrl(stats.logoUrl)}
                 alt="Election Logo"
                 className="w-20 h-20 rounded-2xl object-contain border"
                 onError={(e) => {
                   e.target.onerror = null;
-                  e.target.src = "https://via.placeholder.com/80x80?text=Logo";
+                  e.target.style.display = "none";
                 }}
               />
             ) : (
