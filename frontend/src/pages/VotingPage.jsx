@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../config/api";
-import { none } from "../../../backend/src/middleware/uploadElectionLogo";
 
 const VotingPage = () => {
   const [positions, setPositions] = useState([]);
