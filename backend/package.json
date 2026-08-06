@@ -2,7 +2,7 @@
   "name": "voting-backend",
   "scripts": {
     "dev": "cross-env NODE_ENV=development nodemon src/server.js",
-    "start": "cross-env NODE_ENV=production node src/server.js"
+    "start": "node src/server.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
