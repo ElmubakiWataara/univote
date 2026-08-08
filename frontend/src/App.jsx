@@ -196,7 +196,17 @@ function App() {
           />
 
           {/* Catch-all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+
+          <Route
+            path="*"
+            element={
+              <div className="p-10">
+                <h1 className="text-3xl font-bold">ROUTE NOT FOUND</h1>
+                <p>Current URL: {window.location.pathname}</p>
+              </div>
+            }
+          />
         </Routes>
       </Router>
     </AuthProvider>
