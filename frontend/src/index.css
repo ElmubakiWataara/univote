@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+@theme {
+  /* Brand colors */
+  --color-brand-green: #15803d;
+  --color-brand-yellow: #ca8a04;
+  --color-brand-wine: #7f1d1d;
+
+  /* Soft versions for badges/backgrounds */
+  --color-brand-green-soft: #dcfce7;
+  --color-brand-yellow-soft: #fef9c3;
+  --color-brand-wine-soft: #fee2e2;
+}

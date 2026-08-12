@@ -3,6 +3,7 @@ import axios from "axios";
 import AdminLayout from "../components/AdminLayout";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../config/api";
+import { Camera } from "lucide-react";
 
 const ElectionSettings = () => {
   const { token: authToken } = useAuth();
@@ -26,6 +27,9 @@ const ElectionSettings = () => {
 
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+
+  const inputClass =
+    "w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-full outline-none transition focus:ring-2 focus:ring-brand-wine/20 focus:border-brand-wine";
 
   useEffect(() => {
     fetchElectionSettings();
@@ -52,9 +56,9 @@ const ElectionSettings = () => {
 
       if (settings.logo_url) {
         setLogoPreview(
-          settings.logo_url.startsWith("/")
+          settings.logo_url.startsWith("http")
             ? settings.logo_url
-            : `/uploads${settings.logo_url.startsWith("/") ? "" : "/"}${settings.logo_url}`,
+            : `${API_URL}${settings.logo_url.startsWith("/") ? "" : "/"}${settings.logo_url}`,
         );
       }
     } catch (err) {
@@ -134,7 +138,6 @@ const ElectionSettings = () => {
       );
 
       setSuccess("Election configuration updated successfully");
-
       fetchElectionSettings();
     } catch (err) {
       setError(
@@ -149,32 +152,32 @@ const ElectionSettings = () => {
   if (loading) {
     return (
       <AdminLayout currentPage="settings">
-        <div className="p-10">Loading...</div>
+        <div className="p-10 text-gray-500">Loading...</div>
       </AdminLayout>
     );
   }
 
   return (
     <AdminLayout currentPage="settings">
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-1">
             Election Settings
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-500">
             Manage election status and configuration.
           </p>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-3xl shadow p-2 inline-flex gap-2">
+        <div className="bg-gray-100 rounded-full p-1 inline-flex gap-1">
           <button
             onClick={() => setActiveTab("toggle")}
-            className={`px-6 py-3 rounded-2xl font-medium transition ${
+            className={`px-5 py-2.5 rounded-full text-sm font-semibold transition ${
               activeTab === "toggle"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-white text-brand-wine shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             Election Toggle
@@ -182,10 +185,10 @@ const ElectionSettings = () => {
 
           <button
             onClick={() => setActiveTab("config")}
-            className={`px-6 py-3 rounded-2xl font-medium transition ${
+            className={`px-5 py-2.5 rounded-full text-sm font-semibold transition ${
               activeTab === "config"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "bg-white text-brand-wine shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             Election Configuration
@@ -194,50 +197,54 @@ const ElectionSettings = () => {
 
         {/* Messages */}
         {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-2xl">
+          <div className="bg-brand-green-soft text-brand-green p-4 rounded-2xl text-sm font-medium">
             {success}
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl">
+          <div className="bg-brand-wine-soft text-brand-wine p-4 rounded-2xl text-sm font-medium">
             {error}
           </div>
         )}
 
         {/* TOGGLE TAB */}
         {activeTab === "toggle" && (
-          <div className="bg-white rounded-3xl shadow p-10 max-w-3xl">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 md:p-10 max-w-3xl">
             <div className="flex justify-between items-center">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-lg font-semibold text-gray-800">
                   Election Status
                 </h2>
-
-                <p className="text-gray-600 mt-2">
+                <p className="text-gray-500 mt-1 text-sm">
                   Enable or disable voting across the system.
                 </p>
               </div>
 
               <span
-                className={`px-5 py-2 rounded-full font-semibold ${
+                className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wide ${
                   electionStatus
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
+                    ? "bg-brand-green-soft text-brand-green"
+                    : "bg-brand-wine-soft text-brand-wine"
                 }`}
               >
                 {electionStatus ? "ACTIVE" : "CLOSED"}
               </span>
             </div>
 
-            <div className="mt-10 flex items-center justify-between bg-gray-50 p-6 rounded-3xl">
+            <div
+              className={`mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 rounded-3xl border ${
+                electionStatus
+                  ? "bg-brand-green-soft/40 border-brand-green/10"
+                  : "bg-brand-wine-soft/40 border-brand-wine/10"
+              }`}
+            >
               <div>
-                <p className="font-semibold text-lg">
+                <p className="font-semibold text-gray-900">
                   {electionStatus
                     ? "Voting is currently enabled"
                     : "Voting is currently disabled"}
                 </p>
-
                 <p className="text-gray-500 text-sm mt-1">
                   Students can vote only when the election is active.
                 </p>
@@ -246,10 +253,10 @@ const ElectionSettings = () => {
               <button
                 onClick={handleToggleElection}
                 disabled={submitting}
-                className={`px-8 py-4 rounded-2xl text-white font-semibold transition ${
+                className={`px-8 py-3.5 rounded-full text-white font-semibold transition disabled:opacity-60 shrink-0 ${
                   electionStatus
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-green-600 hover:bg-green-700"
+                    ? "bg-brand-wine hover:bg-brand-wine/90"
+                    : "bg-brand-green hover:bg-brand-green/90"
                 }`}
               >
                 {submitting
@@ -264,86 +271,98 @@ const ElectionSettings = () => {
 
         {/* CONFIG TAB */}
         {activeTab === "config" && (
-          <div className="bg-white rounded-3xl shadow p-6 max-w-2xl">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 md:p-10 max-w-3xl">
+            <h2 className="text-lg font-semibold text-gray-800 mb-8">
+              Basic Details
+            </h2>
+
             <form onSubmit={handleConfigSubmit} className="space-y-8">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Election Title
-                </label>
+              {/* Title + Logo row */}
+              <div className="flex flex-col md:flex-row md:items-start gap-8">
+                <div className="flex-1 space-y-6">
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">
+                      Election Title
+                    </label>
+                    <input
+                      type="text"
+                      value={config.title}
+                      onChange={(e) =>
+                        setConfig({ ...config, title: e.target.value })
+                      }
+                      className={inputClass}
+                      placeholder="Elections"
+                    />
+                  </div>
 
-                <input
-                  type="text"
-                  value={config.title}
-                  onChange={(e) =>
-                    setConfig({
-                      ...config,
-                      title: e.target.value,
-                    })
-                  }
-                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl"
-                />
+                  <div>
+                    <label className="block text-sm text-gray-600 mb-2">
+                      Academic Year
+                    </label>
+                    <input
+                      type="text"
+                      value={config.academic_year}
+                      onChange={(e) =>
+                        setConfig({
+                          ...config,
+                          academic_year: e.target.value,
+                        })
+                      }
+                      className={inputClass}
+                      placeholder="2025 / 2026"
+                    />
+                  </div>
+                </div>
+
+                {/* Logo circle */}
+                <div className="flex flex-col items-center shrink-0">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    className="hidden"
+                    id="logo-upload"
+                  />
+                  <label
+                    htmlFor="logo-upload"
+                    className="cursor-pointer flex flex-col items-center"
+                  >
+                    <div className="w-24 h-24 rounded-full bg-brand-yellow flex items-center justify-center shadow-md shadow-brand-yellow/30 hover:scale-105 transition overflow-hidden">
+                      {logoPreview ? (
+                        <img
+                          src={logoPreview}
+                          alt="Election Logo"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Camera className="w-9 h-9 text-white" />
+                      )}
+                    </div>
+                    <span className="text-sm text-gray-500 mt-3">
+                      {logoPreview ? "Change Logo" : "Add Logo"}
+                    </span>
+                  </label>
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Academic Year
-                </label>
-
-                <input
-                  type="text"
-                  value={config.academic_year}
-                  onChange={(e) =>
-                    setConfig({
-                      ...config,
-                      academic_year: e.target.value,
-                    })
-                  }
-                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl"
-                  placeholder="2025 / 2026"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm text-gray-600 mb-2">
                   Election Description
                 </label>
-
                 <textarea
                   value={config.description}
                   onChange={(e) =>
-                    setConfig({
-                      ...config,
-                      description: e.target.value,
-                    })
+                    setConfig({ ...config, description: e.target.value })
                   }
-                  className="w-full px-6 py-4 h-20 border border-gray-300 rounded-2xl"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Election Logo
-                </label>
-
-                {logoPreview && (
-                  <img
-                    src={logoPreview}
-                    alt="Election Logo"
-                    className="w-40 h-40 object-cover rounded-2xl border mb-4"
-                  />
-                )}
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleLogoChange}
+                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl h-28 outline-none transition focus:ring-2 focus:ring-brand-wine/20 focus:border-brand-wine resize-none"
+                  placeholder="Brief description of the election..."
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-10 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl transition"
+                className="w-full py-4 bg-brand-wine hover:bg-brand-wine/90 text-white font-semibold text-lg rounded-full transition disabled:opacity-60"
               >
                 {submitting ? "Saving..." : "Save Configuration"}
               </button>

@@ -16,7 +16,8 @@ dist-ssr
 .env.development
 .env.production
 
-
+# Uploaded files
+backend/uploads/
 
 
 

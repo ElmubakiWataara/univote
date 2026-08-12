@@ -1,12 +1,11 @@
-// frontend/src/pages/RegisterVoter.jsx
 import { useState } from "react";
 import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../config/api";
+import { UploadCloud, FileText } from "lucide-react";
 
 const RegisterVoter = () => {
-  // Single Registration
   const [formData, setFormData] = useState({
     student_id: "",
     full_name: "",
@@ -17,14 +16,12 @@ const RegisterVoter = () => {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  // Bulk Upload
   const [bulkFile, setBulkFile] = useState(null);
   const [bulkLoading, setBulkLoading] = useState(false);
   const [bulkResult, setBulkResult] = useState(null);
 
   const { token: authToken } = useAuth();
 
-  // Single Registration
   const handleSingleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -47,13 +44,13 @@ const RegisterVoter = () => {
     }
   };
 
-  // Bulk Upload
   const handleBulkUpload = async (e) => {
     e.preventDefault();
     if (!bulkFile) return;
 
     setBulkLoading(true);
     setBulkResult(null);
+    setError("");
 
     const form = new FormData();
     form.append("file", bulkFile);
@@ -64,7 +61,7 @@ const RegisterVoter = () => {
       });
 
       setBulkResult(res.data);
-      setBulkFile(null); // Reset file input
+      setBulkFile(null);
     } catch (err) {
       setError(err.response?.data?.message || "Bulk upload failed");
     } finally {
@@ -72,20 +69,47 @@ const RegisterVoter = () => {
     }
   };
 
+  const inputClass =
+    "w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-full outline-none transition focus:ring-2 focus:ring-brand-wine/20 focus:border-brand-wine";
+
   return (
     <AdminLayout currentPage="voters">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-1">
+          Register Voters
+        </h1>
+        <p className="text-gray-500">
+          Register students one by one or upload a CSV in bulk.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* === SINGLE REGISTRATION === */}
-        <div className="bg-white rounded-3xl shadow p-10">
-          <h2 className="text-2xl font-semibold mb-6 text-gray-900">
-            Single Registration
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 md:p-10">
+          <h2 className="text-lg font-semibold text-gray-800 mb-8">
+            Basic Details
           </h2>
-          <p className="text-gray-600 mb-8">Register one student at a time.</p>
 
-          <form onSubmit={handleSingleSubmit} className="space-y-8">
-            <div className="grid grid-cols-2 gap-6">
+          <form onSubmit={handleSingleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm text-gray-600 mb-2">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={formData.full_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, full_name: e.target.value })
+                }
+                className={inputClass}
+                placeholder="Enter Full Name"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm text-gray-600 mb-2">
                   Student ID
                 </label>
                 <input
@@ -97,13 +121,14 @@ const RegisterVoter = () => {
                       student_id: e.target.value.toUpperCase(),
                     })
                   }
-                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                  className={inputClass}
                   placeholder="U2023001"
                   required
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm text-gray-600 mb-2">
                   Department
                 </label>
                 <input
@@ -112,30 +137,14 @@ const RegisterVoter = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, department: e.target.value })
                   }
-                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                  className={inputClass}
                   placeholder="Computer Science"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
-              </label>
-              <input
-                type="text"
-                value={formData.full_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, full_name: e.target.value })
-                }
-                className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
-                placeholder="John Doe"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm text-gray-600 mb-2">
                 Email (Optional)
               </label>
               <input
@@ -144,38 +153,46 @@ const RegisterVoter = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
-                placeholder="student@university.edu"
+                className={inputClass}
+                placeholder="voter@esofa.edu"
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-lg rounded-2xl transition disabled:opacity-70"
+              className="w-full py-4 bg-brand-wine hover:bg-brand-wine/90 text-white font-semibold text-lg rounded-full transition disabled:opacity-60"
             >
               {loading ? "Registering..." : "Register Voter"}
             </button>
           </form>
 
           {success && (
-            <p className="mt-6 text-green-600 font-medium">{success}</p>
+            <div className="mt-6 px-4 py-3 rounded-2xl bg-brand-green-soft text-brand-green font-medium text-sm">
+              {success}
+            </div>
           )}
-          {error && <p className="mt-6 text-red-600">{error}</p>}
+          {error && !bulkResult && (
+            <div className="mt-6 px-4 py-3 rounded-2xl bg-brand-wine-soft text-brand-wine font-medium text-sm">
+              {error}
+            </div>
+          )}
         </div>
 
         {/* === BULK REGISTRATION === */}
-        <div className="bg-white rounded-3xl shadow p-10">
-          <h2 className="text-2xl font-semibold mb-6 text-gray-900">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 md:p-10">
+          <h2 className="text-lg font-semibold text-gray-800 mb-2">
             Bulk Registration
           </h2>
-          <p className="text-gray-600 mb-6">
-            Upload a CSV file with columns:{" "}
-            <strong>student_id, full_name, department, email</strong>
+          <p className="text-gray-500 mb-8 text-sm">
+            Upload a CSV with columns:{" "}
+            <span className="font-medium text-gray-700">
+              student_id, full_name, department, email
+            </span>
           </p>
 
           <form onSubmit={handleBulkUpload}>
-            <div className="border-2 border-dashed border-gray-300 rounded-3xl p-12 text-center mb-6">
+            <div className="border-2 border-dashed border-gray-200 rounded-3xl p-10 text-center mb-6 transition hover:border-brand-yellow hover:bg-brand-yellow-soft/30">
               <input
                 type="file"
                 accept=".csv"
@@ -183,18 +200,30 @@ const RegisterVoter = () => {
                 className="hidden"
                 id="bulk-upload"
               />
-              <label
-                htmlFor="bulk-upload"
-                className="cursor-pointer text-indigo-600 hover:text-indigo-700 font-medium block"
-              >
-                {bulkFile ? bulkFile.name : "Choose CSV File"}
+              <label htmlFor="bulk-upload" className="cursor-pointer block">
+                <div className="mx-auto w-16 h-16 rounded-full bg-brand-yellow flex items-center justify-center mb-3 shadow-md shadow-brand-yellow/30">
+                  {bulkFile ? (
+                    <FileText
+                      className="w-7 h-7 text-white"
+                      strokeWidth={1.75}
+                    />
+                  ) : (
+                    <UploadCloud
+                      className="w-7 h-7 text-white"
+                      strokeWidth={1.75}
+                    />
+                  )}
+                </div>
+                <span className="text-gray-600 font-medium text-sm">
+                  {bulkFile ? bulkFile.name : "Choose CSV File"}
+                </span>
               </label>
             </div>
 
             <button
               type="submit"
               disabled={!bulkFile || bulkLoading}
-              className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-lg rounded-2xl transition disabled:opacity-70"
+              className="w-full py-4 bg-brand-yellow hover:bg-brand-yellow/90 text-white font-semibold text-lg rounded-full transition disabled:opacity-60"
             >
               {bulkLoading
                 ? "Processing Bulk Upload..."
@@ -203,21 +232,21 @@ const RegisterVoter = () => {
           </form>
 
           {bulkResult && (
-            <div className="mt-8 p-6 bg-emerald-50 border border-emerald-200 rounded-2xl">
-              <h3 className="font-semibold text-emerald-700 mb-3">
+            <div className="mt-6 p-6 bg-brand-green-soft border border-brand-green/10 rounded-2xl">
+              <h3 className="font-semibold text-brand-green mb-3 text-sm">
                 Bulk Upload Summary
               </h3>
-              <p className="text-sm">
+              <p className="text-sm text-gray-700 leading-relaxed">
                 Total Records:{" "}
                 <span className="font-medium">{bulkResult.summary.total}</span>
                 <br />
                 Successfully Added:{" "}
-                <span className="font-medium text-emerald-600">
+                <span className="font-medium text-brand-green">
                   {bulkResult.summary.success}
                 </span>
                 <br />
                 Failed / Skipped:{" "}
-                <span className="font-medium text-red-600">
+                <span className="font-medium text-brand-wine">
                   {bulkResult.summary.failed}
                 </span>
               </p>

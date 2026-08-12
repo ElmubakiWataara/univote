@@ -3,6 +3,7 @@ import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../config/api";
+import { Camera } from "lucide-react";
 
 const AddCandidate = () => {
   const [formData, setFormData] = useState({
@@ -54,7 +55,6 @@ const AddCandidate = () => {
       setPhoto(null);
       setPhotoPreview(null);
     } catch (err) {
-      console.error(err);
       setError(
         err.response?.data?.message ||
           "Failed to add candidate. Please try again.",
@@ -66,92 +66,40 @@ const AddCandidate = () => {
 
   return (
     <AdminLayout currentPage="candidates">
-      <div className="max-w-2xl">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+      <div className="max-w-3xl">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-1">
           Add New Candidate
         </h1>
-        <p className="text-gray-600 mb-4">
+        <p className="text-gray-500 mb-8">
           Add a candidate to the election ballot.
         </p>
 
-        <div className="bg-white rounded-3xl shadow p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
-                placeholder="Enter full name"
-                required
-              />
-            </div>
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 md:p-10">
+          <h2 className="text-lg font-semibold text-gray-800 mb-8">
+            Basic Details
+          </h2>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Position
-              </label>
-              <input
-                type="text"
-                value={formData.position}
-                onChange={(e) =>
-                  setFormData({ ...formData, position: e.target.value })
-                }
-                className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
-                placeholder="President, Vice President, Secretary..."
-                required
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Name + Photo row */}
+            <div className="flex flex-col md:flex-row md:items-start gap-8">
+              <div className="flex-1">
+                <label className="block text-sm text-gray-600 mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-full outline-none transition focus:ring-2 focus:ring-brand-wine/20 focus:border-brand-wine"
+                  placeholder="Enter Full Name"
+                  required
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Yes or No (Optional for Unopposed Candidates)
-              </label>
-              <input
-                type="text"
-                value={formData.yes_or_no}
-                onChange={(e) =>
-                  setFormData({ ...formData, yes_or_no: e.target.value })
-                }
-                className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
-                placeholder="Yes or No"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Motto / Manifesto (Optional)
-              </label>
-              <textarea
-                value={formData.bio}
-                onChange={(e) =>
-                  setFormData({ ...formData, bio: e.target.value })
-                }
-                className="w-full px-6 py-4 border border-gray-300 rounded-2xl h-22 focus:ring-2 focus:ring-indigo-600"
-                placeholder="Brief introduction or campaign statement..."
-              />
-            </div>
-
-            {/* Photo Upload Section */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Candidate Photo (Optional)
-              </label>
-              <div className="h-20 border-2 border-dashed border-gray-300 rounded-3xl p-2 text-center">
-                {photoPreview ? (
-                  <img
-                    className="mx-auto h-32 w-32 object-cover rounded-2xl shadow"
-                    src={photoPreview}
-                    alt="Preview"
-                  />
-                ) : (
-                  <div className="text-gray-400 text-7xl mb-4"> </div>
-                )}
+              {/* Photo upload circle */}
+              <div className="flex flex-col items-center shrink-0">
                 <input
                   type="file"
                   accept="image/*"
@@ -161,26 +109,94 @@ const AddCandidate = () => {
                 />
                 <label
                   htmlFor="photo-upload"
-                  className="cursor-pointer text-indigo-600 hover:text-indigo-700 font-medium block mt-4"
+                  className="cursor-pointer flex flex-col items-center"
                 >
-                  {photoPreview ? "Change Photo" : "Click to Upload Photo"}
+                  <div className="w-20 h-20 rounded-full bg-brand-yellow flex items-center justify-center shadow-md shadow-brand-yellow/30 hover:scale-105 transition overflow-hidden">
+                    {photoPreview ? (
+                      <img
+                        src={photoPreview}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Camera className="w-8 h-8 text-white" />
+                    )}
+                  </div>
+                  <span className="text-sm text-gray-500 mt-3">
+                    {photoPreview ? "Change Photo" : "Add Photo"}
+                  </span>
                 </label>
               </div>
+            </div>
+
+            {/* Position + Yes/No row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm text-gray-600 mb-2">
+                  Position
+                </label>
+                <input
+                  type="text"
+                  value={formData.position}
+                  onChange={(e) =>
+                    setFormData({ ...formData, position: e.target.value })
+                  }
+                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-full outline-none transition focus:ring-2 focus:ring-brand-wine/20 focus:border-brand-wine"
+                  placeholder="President, Secretary..."
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-600 mb-2">
+                  Yes / No (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.yes_or_no}
+                  onChange={(e) =>
+                    setFormData({ ...formData, yes_or_no: e.target.value })
+                  }
+                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-full outline-none transition focus:ring-2 focus:ring-brand-wine/20 focus:border-brand-wine"
+                  placeholder="For unopposed candidates"
+                />
+              </div>
+            </div>
+
+            {/* Bio full width */}
+            <div>
+              <label className="block text-sm text-gray-600 mb-2">
+                Motto / Manifesto (Optional)
+              </label>
+              <textarea
+                value={formData.bio}
+                onChange={(e) =>
+                  setFormData({ ...formData, bio: e.target.value })
+                }
+                className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl h-28 outline-none transition focus:ring-2 focus:ring-brand-wine/20 focus:border-brand-wine resize-none"
+                placeholder="Brief introduction or campaign statement..."
+              />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-lg rounded-2xl transition disabled:opacity-70"
+              className="w-full py-4 bg-brand-wine hover:bg-brand-wine/90 text-white font-semibold text-lg rounded-full transition disabled:opacity-60"
             >
               {loading ? "Adding Candidate..." : "Add Candidate"}
             </button>
           </form>
 
           {success && (
-            <p className="mt-6 text-green-600 font-medium">{success}</p>
+            <div className="mt-6 px-4 py-3 rounded-2xl bg-brand-green-soft text-brand-green font-medium text-sm">
+              {success}
+            </div>
           )}
-          {error && <p className="mt-6 text-red-600">{error}</p>}
+          {error && (
+            <div className="mt-6 px-4 py-3 rounded-2xl bg-brand-wine-soft text-brand-wine font-medium text-sm">
+              {error}
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../config/api";
+import { NonBinaryIcon } from "lucide-react";
 
 const VoterTokenInput = () => {
   const [token, setToken] = useState("");
@@ -49,7 +50,7 @@ const VoterTokenInput = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex items-center justify-center">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-gray-50 via-brand-green-soft/30 to-gray-100 flex items-center justify-center">
       {/* Background Logo */}
       {election.logo && (
         <div
@@ -61,43 +62,43 @@ const VoterTokenInput = () => {
         />
       )}
 
-      {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 to-indigo-900/40" />
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-brand-green/10 to-gray-900/10" />
 
       {/* Login Card */}
       <div className="relative z-10 bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-10 w-full max-w-md border border-white/50">
         {/* Logo */}
         {election.logo && (
-          <div className="flex justify-center mb-2">
+          <div className="flex justify-center mb-4">
             <img
               src={getImageUrl(election.logo)}
               alt=" "
-              className="w-24 h-24 object-contain"
+              className="w-20 h-20 object-contain"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = "https://via.placeholder.com/96x96?text=Logo";
+                e.target.src = none;
               }}
             />
           </div>
         )}
 
-        <div className="text-center mb-4 ">
-          <h1 className="text-3xl font-bold text-gray-800">{election.title}</h1>
-          <p className="text-lg text-gray-800 mt-1">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">{election.title}</h1>
+          <p className="text-sm text-gray-500 mt-2">
             Enter your voting token below
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-lg font-medium text-gray-00 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Voting Token
             </label>
             <input
               type="text"
               value={token}
               onChange={(e) => setToken(e.target.value.toUpperCase())}
-              className="w-full px-5 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-lg tracking-[0.35em] text-center uppercase"
+              className="w-full px-5 py-4 border border-gray-200 rounded-xl outline-none transition focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green text-lg tracking-[0.35em] text-center uppercase"
               placeholder="YS2W0Z"
               maxLength={6}
               required
@@ -105,7 +106,7 @@ const VoterTokenInput = () => {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-300 text-red-600 rounded-xl p-4 text-sm">
+            <div className="bg-brand-wine-soft text-brand-wine rounded-xl p-4 text-sm font-medium">
               {error}
             </div>
           )}
@@ -113,7 +114,7 @@ const VoterTokenInput = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition disabled:opacity-50"
+            className="w-full py-4 rounded-xl bg-brand-green hover:bg-brand-green/90 text-white font-semibold transition disabled:opacity-60"
           >
             {loading ? "Verifying..." : "Continue to Vote"}
           </button>

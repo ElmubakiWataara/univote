@@ -3,6 +3,7 @@ import AdminLayout from "../components/AdminLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../config/api";
+import { Search, Pencil, Trash2 } from "lucide-react";
 
 const ListCandidates = () => {
   const [candidates, setCandidates] = useState([]);
@@ -16,6 +17,7 @@ const ListCandidates = () => {
     bio: "",
     yes_or_no: "",
   });
+  const [showAll, setShowAll] = useState(false);
 
   const { token: authToken } = useAuth();
 
@@ -123,85 +125,106 @@ const ListCandidates = () => {
       c.position?.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const displayedCandidates = showAll
+    ? filteredCandidates
+    : filteredCandidates.slice(0, 7);
+
   return (
     <AdminLayout currentPage="candidates">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
             List of Candidates
           </h1>
-          <input
-            type="text"
-            placeholder="Search candidates..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-5 py-3 w-80 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
+          <div className="relative w-80">
+            <Search
+              className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2"
+              strokeWidth={1.75}
+            />
+            <input
+              type="text"
+              placeholder="Search candidates..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl outline-none transition focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
+            />
+          </div>
         </div>
 
-        <div className="bg-white rounded-3xl shadow overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-gray-50/80 border-b border-gray-100">
               <tr>
-                <th className="text-left py-5 px-8 font-medium text-gray-600 w-12">
+                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wide w-12">
                   SN
                 </th>
-                <th className="text-left py-5 px-8 font-medium text-gray-600 w-20">
+                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wide w-20">
                   Image
                 </th>
-                <th className="text-left py-5 px-8 font-medium text-gray-600">
+                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   Name
                 </th>
-                <th className="text-left py-5 px-8 font-medium text-gray-600">
+                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   Position
                 </th>
-                <th className="text-left py-5 px-8 font-medium text-gray-600">
+                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   Bio
                 </th>
-                <th className="text-left py-5 px-8 font-medium text-gray-600">
+                <th className="text-left py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   Yes/No
                 </th>
-                <th className="text-center py-5 px-8 font-medium text-gray-600">
+                <th className="text-center py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y">
-              {filteredCandidates.map((candidate, index) => (
-                <tr key={candidate.id} className="hover:bg-gray-50 transition">
-                  <td className="py-5 px-8 text-gray-500 font-medium">
+            <tbody className="divide-y divide-gray-100">
+              {displayedCandidates.map((candidate, index) => (
+                <tr
+                  key={candidate.id}
+                  className="hover:bg-brand-green-soft/20 transition"
+                >
+                  <td className="py-4 px-6 text-gray-400 font-medium text-sm">
                     {index + 1}
                   </td>
-                  <td className="py-5 px-8">
+                  <td className="py-4 px-6">
                     <CandidateImage
                       photo_url={candidate.photo_url}
                       name={candidate.name}
                     />
                   </td>
-                  <td className="py-5 px-8 font-medium">{candidate.name}</td>
-                  <td className="py-5 px-8 text-gray-700">
+                  <td className="py-4 px-6 font-medium text-gray-900">
+                    {candidate.name}
+                  </td>
+                  <td className="py-4 px-6 text-gray-600 text-sm">
                     {candidate.position}
                   </td>
-                  <td className="py-5 px-8 text-gray-600 text-sm line-clamp-2">
+                  <td className="py-4 px-6 text-gray-500 text-sm line-clamp-2">
                     {candidate.bio || "—"}
                   </td>
-                  <td className="py-5 px-8 text-gray-600 font-medium">
+                  <td className="py-4 px-6 text-gray-600 font-medium text-sm">
                     {candidate.yes_or_no || "—"}
                   </td>
-                  <td className="py-5 px-8 text-center space-x-6">
-                    <button
-                      onClick={() => openEditModal(candidate)}
-                      className="text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(candidate.id, candidate.name)}
-                      disabled={deletingId === candidate.id}
-                      className="text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
-                    >
-                      {deletingId === candidate.id ? "Deleting..." : "Delete"}
-                    </button>
+                  <td className="py-4 px-6">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => openEditModal(candidate)}
+                        className="p-2 rounded-lg text-gray-400 hover:bg-brand-green-soft hover:text-brand-green transition"
+                        title="Edit"
+                      >
+                        <Pencil className="w-4 h-4" strokeWidth={1.75} />
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleDelete(candidate.id, candidate.name)
+                        }
+                        disabled={deletingId === candidate.id}
+                        className="p-2 rounded-lg text-gray-400 hover:bg-brand-wine-soft hover:text-brand-wine transition disabled:opacity-50"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" strokeWidth={1.75} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -209,8 +232,21 @@ const ListCandidates = () => {
           </table>
 
           {filteredCandidates.length === 0 && !loading && (
-            <div className="text-center py-20 text-gray-500">
+            <div className="text-center py-20 text-gray-400">
               No candidates found.
+            </div>
+          )}
+
+          {filteredCandidates.length > 10 && (
+            <div className="p-4 border-t border-gray-100 text-center">
+              <button
+                onClick={() => setShowAll(!showAll)}
+                className="px-6 py-2.5 text-sm font-medium text-brand-wine hover:bg-brand-wine-soft rounded-full transition"
+              >
+                {showAll
+                  ? "Show Less"
+                  : `Show All (${filteredCandidates.length})`}
+              </button>
             </div>
           )}
         </div>
@@ -218,14 +254,22 @@ const ListCandidates = () => {
 
       {/* Edit Modal */}
       {editingCandidate && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
-            <h2 className="text-2xl font-bold mb-6">Edit Candidate</h2>
+        <div
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setEditingCandidate(null)}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-xl border border-gray-100 w-full max-w-md p-8 md:p-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold text-gray-800 mb-8">
+              Edit Candidate
+            </h2>
 
             <form onSubmit={handleEditSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Name
+                <label className="block text-sm text-gray-600 mb-2">
+                  Full Name
                 </label>
                 <input
                   type="text"
@@ -233,43 +277,45 @@ const ListCandidates = () => {
                   onChange={(e) =>
                     setEditForm({ ...editForm, name: e.target.value })
                   }
-                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-full outline-none transition focus:ring-2 focus:ring-brand-wine/20 focus:border-brand-wine"
                   required
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Position
-                </label>
-                <input
-                  type="text"
-                  value={editForm.position}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, position: e.target.value })
-                  }
-                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
-                  required
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-2">
+                    Position
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.position}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, position: e.target.value })
+                    }
+                    className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-full outline-none transition focus:ring-2 focus:ring-brand-wine/20 focus:border-brand-wine"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-600 mb-2">
+                    Yes / No (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.yes_or_no}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, yes_or_no: e.target.value })
+                    }
+                    className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-full outline-none transition focus:ring-2 focus:ring-brand-wine/20 focus:border-brand-wine"
+                    placeholder="YES or NO"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Yes/No (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={editForm.yes_or_no}
-                  onChange={(e) =>
-                    setEditForm({ ...editForm, yes_or_no: e.target.value })
-                  }
-                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
-                  placeholder="YES or NO"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm text-gray-600 mb-2">
                   Bio (Optional)
                 </label>
                 <textarea
@@ -277,21 +323,22 @@ const ListCandidates = () => {
                   onChange={(e) =>
                     setEditForm({ ...editForm, bio: e.target.value })
                   }
-                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl h-32 focus:ring-2 focus:ring-indigo-600"
+                  className="w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl h-28 outline-none transition focus:ring-2 focus:ring-brand-wine/20 focus:border-brand-wine resize-none"
+                  placeholder="Brief introduction or campaign statement..."
                 />
               </div>
 
-              <div className="flex gap-4 pt-6">
+              <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setEditingCandidate(null)}
-                  className="flex-1 py-4 border border-gray-300 rounded-2xl font-medium hover:bg-gray-50"
+                  className="flex-1 py-3.5 border border-gray-200 rounded-full font-medium text-gray-700 hover:bg-gray-50 transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-4 bg-indigo-600 text-white font-semibold rounded-2xl hover:bg-indigo-700"
+                  className="flex-1 py-3.5 bg-brand-wine text-white font-semibold rounded-full hover:bg-brand-wine/90 transition"
                 >
                   Save Changes
                 </button>

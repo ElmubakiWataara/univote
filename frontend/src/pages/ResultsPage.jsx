@@ -8,6 +8,7 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import autoTable from "jspdf-autotable";
 import API_URL from "../config/api";
+import { FileSpreadsheet, FileText, RefreshCw, X, User } from "lucide-react";
 
 const ResultsPage = () => {
   const [results, setResults] = useState({});
@@ -39,13 +40,9 @@ const ResultsPage = () => {
   }, []);
 
   const getRankColor = (rank, totalCandidates) => {
-    if (rank === 1) return "bg-emerald-500";
-    if (rank === totalCandidates) return "bg-red-500";
-    if (totalCandidates <= 3) return rank === 2 ? "bg-amber-500" : "bg-red-500";
-    const ratio = (rank - 1) / (totalCandidates - 1);
-    if (ratio < 0.3) return "bg-teal-500";
-    if (ratio < 0.6) return "bg-amber-500";
-    return "bg-orange-500";
+    if (rank === 1) return "bg-brand-green";
+    if (rank === totalCandidates) return "bg-brand-wine";
+    return "bg-brand-yellow";
   };
 
   const openCandidateModal = (candidate, position, rank) => {
@@ -99,14 +96,13 @@ const ResultsPage = () => {
         `${c.percentage}%`,
       ]);
 
-      // Correct way to call autoTable
       autoTable(doc, {
         startY: y,
         head: [["Candidate", "Votes", "Percentage"]],
         body: tableData,
         theme: "grid",
         styles: { fontSize: 11 },
-        headStyles: { fillColor: [79, 70, 229] },
+        headStyles: { fillColor: [21, 128, 61] }, // brand-green
       });
 
       y = doc.lastAutoTable.finalY + 15;
@@ -126,15 +122,14 @@ const ResultsPage = () => {
     const [failed, setFailed] = useState(false);
     const src = getImageUrl(photo_url);
 
-    // Tailwind needs full class names
     const sizeClass = size === "20" ? "w-20 h-20" : "w-16 h-16";
 
     if (!src || failed) {
       return (
         <div
-          className={`${sizeClass} bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center text-4xl text-gray-400`}
+          className={`${sizeClass} bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center text-gray-400`}
         >
-          👤
+          <User className="w-1/2 h-1/2" strokeWidth={1.5} />
         </div>
       );
     }
@@ -156,7 +151,7 @@ const ResultsPage = () => {
   if (loading) {
     return (
       <AdminLayout currentPage="settings">
-        <div className="flex justify-center items-center h-96">
+        <div className="flex justify-center items-center h-96 text-gray-500">
           Loading results...
         </div>
       </AdminLayout>
@@ -165,46 +160,51 @@ const ResultsPage = () => {
 
   return (
     <AdminLayout currentPage="settings">
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900">
               Election Results
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-500 mt-1 text-sm">
               Total votes cast:{" "}
-              <span className="font-semibold">{totalVotes}</span>
+              <span className="font-semibold text-gray-700">{totalVotes}</span>
             </p>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
               onClick={exportToExcel}
-              className="px-6 py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition flex items-center gap-2"
+              className="px-5 py-2.5 bg-brand-green hover:bg-brand-green/90 text-white text-sm font-medium rounded-xl transition flex items-center gap-2"
             >
-              📊 Excel
+              <FileSpreadsheet className="w-4 h-4" strokeWidth={1.75} />
+              Excel
             </button>
             <button
               onClick={exportToPDF}
-              className="px-6 py-3 bg-red-600 text-white rounded-2xl hover:bg-red-700 transition flex items-center gap-2"
+              className="px-5 py-2.5 bg-brand-wine hover:bg-brand-wine/90 text-white text-sm font-medium rounded-xl transition flex items-center gap-2"
             >
-              📄 PDF
+              <FileText className="w-4 h-4" strokeWidth={1.75} />
+              PDF
             </button>
             <button
               onClick={fetchResults}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition"
+              className="px-5 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition flex items-center gap-2"
             >
+              <RefreshCw className="w-4 h-4" strokeWidth={1.75} />
               Refresh
             </button>
           </div>
         </div>
 
         {error && (
-          <p className="text-red-600 bg-red-50 p-4 rounded-2xl">{error}</p>
+          <div className="px-4 py-3 rounded-xl bg-brand-wine-soft text-brand-wine font-medium text-sm">
+            {error}
+          </div>
         )}
 
         {Object.keys(results).length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center text-gray-500">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center text-gray-500">
             No results available yet.
           </div>
         ) : (
@@ -215,12 +215,15 @@ const ResultsPage = () => {
             const totalCandidates = sortedCandidates.length;
 
             return (
-              <div key={position} className="bg-white rounded-3xl shadow p-8">
-                <h2 className="text-2xl font-semibold mb-8 text-indigo-700 border-b pb-4">
+              <div
+                key={position}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8"
+              >
+                <h2 className="text-xl font-semibold mb-6 text-gray-900 border-b border-gray-100 pb-4">
                   {position}
                 </h2>
 
-                <div className="space-y-6">
+                <div className="space-y-3">
                   {sortedCandidates.map((candidate, index) => {
                     const rank = index + 1;
                     const colorClass = getRankColor(rank, totalCandidates);
@@ -232,53 +235,53 @@ const ResultsPage = () => {
                         onClick={() =>
                           openCandidateModal(candidate, position, rank)
                         }
-                        className="flex items-center gap-6 p-4 rounded-2xl hover:bg-gray-50 cursor-pointer transition group"
+                        className="flex items-center gap-5 p-4 rounded-2xl hover:bg-gray-50 cursor-pointer transition group"
                       >
                         <CandidateImage
                           photo_url={candidate.photo_url}
                           name={candidate.name}
                         />
 
-                        <span
-                          className={` inline-flex items-center px-3 py-2 text-sm font-semibold ${
-                            candidate.yes_or_no === "YES"
-                              ? "bg-red-100 text-red-700"
-                              : candidate.yes_or_no === "NO"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-gray-100 text-gray-600"
-                          }`}
-                        >
-                          {candidate.yes_or_no || ""}
-                        </span>
+                        {candidate.yes_or_no && (
+                          <span
+                            className={`inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold ${
+                              candidate.yes_or_no === "YES"
+                                ? "bg-brand-green-soft text-brand-green"
+                                : "bg-brand-wine-soft text-brand-wine"
+                            }`}
+                          >
+                            {candidate.yes_or_no}
+                          </span>
+                        )}
 
                         <div className="flex-1">
                           <div className="flex justify-between mb-2">
                             <div>
-                              <h3 className="font-semibold text-xl group-hover:text-indigo-600 transition">
+                              <h3 className="font-semibold text-lg text-gray-900 group-hover:text-brand-green transition">
                                 {candidate.name}
                               </h3>
-                              <span className="text-sm text-gray-500">
+                              <span className="text-sm text-gray-400">
                                 Rank #{rank}
                               </span>
                             </div>
                             <div className="text-right">
-                              <span className="font-bold text-2xl">
+                              <span className="font-bold text-xl text-gray-900">
                                 {candidate.votes}
                               </span>
-                              <span className="text-sm text-gray-500 ml-1">
+                              <span className="text-sm text-gray-400 ml-1">
                                 votes
                               </span>
                             </div>
                           </div>
 
                           <div className="flex items-center gap-4">
-                            <div className="flex-1 bg-gray-100 h-4 rounded-full overflow-hidden">
+                            <div className="flex-1 bg-gray-100 h-3 rounded-full overflow-hidden">
                               <div
                                 className={`h-full transition-all duration-700 ${colorClass}`}
                                 style={{ width: `${percentage}%` }}
                               />
                             </div>
-                            <div className="w-16 text-right font-medium text-lg">
+                            <div className="w-14 text-right font-medium text-gray-700">
                               {percentage}%
                             </div>
                           </div>
@@ -294,75 +297,88 @@ const ResultsPage = () => {
       </div>
 
       {/* Candidate Detail Modal */}
+      {/* Candidate Detail Modal */}
       {selectedCandidate && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-auto">
-            <div className="p-8">
-              <div className="flex justify-end mb-4">
-                <button
-                  onClick={closeModal}
-                  className="text-3xl text-gray-400 hover:text-red-600"
-                >
-                  ✕
-                </button>
-              </div>
+        <div
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          onClick={closeModal}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Photo section */}
+            <div className="relative bg-brand-wine-soft">
+              <button
+                onClick={closeModal}
+                className="absolute top-4 right-4 z-10 w-9 h-9 rounded-full bg-black/30 text-white flex items-center justify-center hover:bg-black/50 transition"
+              >
+                <X className="w-5 h-5" strokeWidth={1.75} />
+              </button>
 
-              <div className="flex flex-col md:flex-row gap-8">
-                <div className="flex-shrink-0">
-                  <CandidateImage
-                    photo_url={selectedCandidate.photo_url}
-                    name={selectedCandidate.name}
-                    size="24"
-                  />
+              {selectedCandidate.photo_url ? (
+                <img
+                  src={
+                    selectedCandidate.photo_url.startsWith("http")
+                      ? selectedCandidate.photo_url
+                      : `${API_URL}${selectedCandidate.photo_url}`
+                  }
+                  alt={selectedCandidate.name}
+                  className="w-full h-72 object-cover object-top"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = none;
+                  }}
+                />
+              ) : (
+                <div className="w-full h-72 flex items-center justify-center text-6xl text-brand-wine/40">
+                  👤
                 </div>
+              )}
 
-                <div className="flex-1">
-                  <p className="text-2xl text-indigo-600 mt-1">
+              {/* Name overlay */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-5 pb-4 pt-16">
+                <h3 className="text-4xl font-bold text-white uppercase leading-tight">
+                  {selectedCandidate.name}
+                </h3>
+              </div>
+            </div>
+
+            {/* Stats footer */}
+            <div className="bg-brand-wine text-white px-5 py-5">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-xl font-bold uppercase tracking-wide text-white/80 flex items-center gap-1">
+                    <span className="opacity-70"></span>
                     {selectedCandidate.position}
                   </p>
+                  <p className="mt-2 text-2xl font-bold leading-none">
+                    {selectedCandidate.votes.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-white/70 mt-1">votes</p>
 
                   {selectedCandidate.yes_or_no && (
-                    <span
-                      className={`inline-flex mt-3 px-5 py-3  font-semibold ${
-                        selectedCandidate.yes_or_no === "YES"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
+                    <span className="inline-block mt-3 px-3 py-1 rounded-full text-xs font-semibold bg-white/15">
                       {selectedCandidate.yes_or_no}
                     </span>
                   )}
-                  {/* <p className="text-2xl text-indigo-600 mt-1">
-                    {selectedCandidate.position}
-                  </p> */}
+                </div>
 
-                  <div className="mt-8 grid grid-cols-2 gap-8">
-                    <div>
-                      <p className="text-sm text-gray-500">Votes Received</p>
-                      <p className="text-5xl font-bold text-gray-900 mt-1">
-                        {selectedCandidate.votes}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Percentage</p>
-                      <p className="text-5xl font-bold text-gray-900 mt-1">
-                        {selectedCandidate.percentage}%
-                      </p>
-                    </div>
-                  </div>
-
-                  {selectedCandidate.bio && (
-                    <div className="mt-10">
-                      <p className="text-sm text-gray-500 mb-3">
-                        Bio / Manifesto
-                      </p>
-                      <p className="text-gray-700 leading-relaxed">
-                        {selectedCandidate.bio}
-                      </p>
-                    </div>
-                  )}
+                <div className="text-right">
+                  <p className="text-4xl font-bold leading-none">
+                    {selectedCandidate.percentage}%
+                  </p>
                 </div>
               </div>
+
+              {selectedCandidate.bio && (
+                <div className="mt-5 pt-4 border-t border-white/20">
+                  <p className="text-xs text-white/70 mb-1">Bio / Manifesto</p>
+                  <p className="text-sm text-white/90 leading-relaxed">
+                    {selectedCandidate.bio}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

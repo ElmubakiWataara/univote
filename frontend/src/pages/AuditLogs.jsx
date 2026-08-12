@@ -73,10 +73,12 @@ const AuditLogs = () => {
   return (
     <AdminLayout currentPage="settings">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Audit Logs</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+              Audit Logs
+            </h1>
+            <p className="text-gray-500 mt-1">
               Complete system activity history
             </p>
           </div>
@@ -84,12 +86,12 @@ const AuditLogs = () => {
           <button
             onClick={fetchLogs}
             disabled={loading}
-            className="flex items-center gap-2 px-5 py-3 border border-slate-300 bg-white text-slate-700 rounded-xl hover:bg-slate-50 hover:border-indigo-400 transition disabled:opacity-50"
+            className="flex items-center gap-2 px-5 py-2.5 border border-gray-200 bg-white text-gray-700 rounded-xl hover:border-brand-green hover:text-brand-green transition disabled:opacity-50"
           >
             <span
               className={
                 loading
-                  ? "animate-spin inline-block w-3 h-3 border-2 border-indigo-600 border-t-transparent rounded-full"
+                  ? "animate-spin inline-block w-3 h-3 border-2 border-brand-green border-t-transparent rounded-full"
                   : ""
               }
             >
@@ -100,19 +102,19 @@ const AuditLogs = () => {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-3xl shadow p-6 mb-8 flex flex-col md:flex-row gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-6 flex flex-col md:flex-row gap-4">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search action or details..."
-            className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none transition focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
           />
 
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600 bg-white"
+            className="px-4 py-3 border border-gray-200 rounded-xl outline-none transition focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green bg-white"
           >
             <option value="all">All Actions</option>
             <option value="VOTER_REGISTERED">Voter Registered</option>
@@ -129,46 +131,51 @@ const AuditLogs = () => {
         </div>
 
         {/* Logs Table */}
-        <div className="bg-white rounded-3xl shadow overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-gray-50/80 border-b border-gray-100">
                 <tr>
-                  <th className="px-8 py-5 text-left text-sm font-medium text-gray-500">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                     Time
                   </th>
-                  <th className="px-8 py-5 text-left text-sm font-medium text-gray-500">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                     Action
                   </th>
-                  <th className="px-8 py-5 text-left text-sm font-medium text-gray-500">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                     Actor
                   </th>
-                  <th className="px-8 py-5 text-left text-sm font-medium text-gray-500">
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                     Details
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-gray-100">
                 {filteredLogs.length > 0 ? (
                   filteredLogs
                     .slice(0, showAll ? filteredLogs.length : 10)
                     .map((log, i) => (
-                      <tr key={i} className="hover:bg-gray-50">
-                        <td className="px-8 py-5 text-sm text-gray-500 whitespace-nowrap">
+                      <tr
+                        key={i}
+                        className="hover:bg-brand-green-soft/20 transition"
+                      >
+                        <td className="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
                           {new Date(log.created_at).toLocaleString()}
                         </td>
-                        <td className="px-8 py-5">
+                        <td className="px-6 py-4">
                           <span className="font-medium text-gray-900">
                             {log.action}
                           </span>
                         </td>
-                        <td className="px-8 py-5 text-sm">
-                          <span className="capitalize">{log.actor_role}</span>
-                          <span className="text-gray-500 ml-2">
+                        <td className="px-6 py-4 text-sm">
+                          <span className="capitalize text-gray-700">
+                            {log.actor_role}
+                          </span>
+                          <span className="text-gray-400 ml-2">
                             #{log.actor_id}
                           </span>
                         </td>
-                        <td className="px-8 py-5 text-sm text-gray-600 break-words max-w-md">
+                        <td className="px-6 py-4 text-sm text-gray-500 break-words max-w-md">
                           {typeof log.details === "string"
                             ? log.details
                             : JSON.stringify(log.details)}
@@ -179,7 +186,7 @@ const AuditLogs = () => {
                   <tr>
                     <td
                       colSpan="4"
-                      className="px-8 py-20 text-center text-gray-500"
+                      className="px-8 py-20 text-center text-gray-400"
                     >
                       No logs found
                     </td>
@@ -191,10 +198,10 @@ const AuditLogs = () => {
 
           {/* Show All Button */}
           {filteredLogs.length > 10 && (
-            <div className="p-6 border-t text-center">
+            <div className="p-5 border-t border-gray-100 text-center">
               <button
                 onClick={() => setShowAll(!showAll)}
-                className="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-2xl transition flex items-center gap-2 mx-auto"
+                className="px-6 py-2.5 bg-brand-green hover:bg-brand-green/90 text-white font-medium text-sm rounded-xl transition inline-flex items-center gap-2"
               >
                 {showAll ? "Show Less" : `Show All (${filteredLogs.length})`}
               </button>

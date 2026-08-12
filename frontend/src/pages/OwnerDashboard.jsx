@@ -2,7 +2,16 @@ import { useState, useEffect } from "react";
 import OwnerLayout from "../components/OwnerLayout";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import API_URL from "../config/api";
+import {
+  Building2,
+  CheckCircle2,
+  Clock,
+  Ban,
+  ArrowRight,
+  UserPlus,
+} from "lucide-react";
 
 const OwnerDashboard = () => {
   const [organizations, setOrganizations] = useState([]);
@@ -16,6 +25,7 @@ const OwnerDashboard = () => {
   const [error, setError] = useState("");
 
   const { token: authToken, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Wait until AuthContext has finished restoring the token
@@ -55,45 +65,61 @@ const OwnerDashboard = () => {
 
   return (
     <OwnerLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900">Owner Dashboard</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+            Owner Dashboard
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
             Manage platform organizations and elections
           </p>
         </div>
 
         {error && (
-          <div className="p-4 bg-red-50 text-red-600 rounded-2xl">{error}</div>
+          <div className="p-4 bg-brand-wine-soft text-brand-wine rounded-xl text-sm font-medium">
+            {error}
+          </div>
         )}
 
         {/* Organization Status Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <div className="text-gray-500 text-sm">Total Organizations</div>
-            <div className="text-5xl font-bold mt-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition">
+            <div className="flex items-center gap-2 text-xs font-medium text-gray-400 uppercase tracking-wide">
+              <Building2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+              Total Organizations
+            </div>
+            <div className="text-4xl font-bold mt-3 text-gray-900">
               {loading ? "—" : organizations.length}
             </div>
           </div>
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <div className="text-gray-500 text-sm">Active</div>
-            <div className="text-5xl font-bold mt-4 text-green-600">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition">
+            <div className="flex items-center gap-2 text-xs font-medium text-gray-400 uppercase tracking-wide">
+              <CheckCircle2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+              Active
+            </div>
+            <div className="text-4xl font-bold mt-3 text-brand-green">
               {loading
                 ? "—"
                 : organizations.filter((o) => o.status === "active").length}
             </div>
           </div>
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <div className="text-gray-500 text-sm">Pending</div>
-            <div className="text-5xl font-bold mt-4 text-yellow-600">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition">
+            <div className="flex items-center gap-2 text-xs font-medium text-gray-400 uppercase tracking-wide">
+              <Clock className="w-3.5 h-3.5" strokeWidth={1.75} />
+              Pending
+            </div>
+            <div className="text-4xl font-bold mt-3 text-brand-yellow">
               {loading
                 ? "—"
                 : organizations.filter((o) => o.status === "pending").length}
             </div>
           </div>
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <div className="text-gray-500 text-sm">Suspended</div>
-            <div className="text-5xl font-bold mt-4 text-red-600">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition">
+            <div className="flex items-center gap-2 text-xs font-medium text-gray-400 uppercase tracking-wide">
+              <Ban className="w-3.5 h-3.5" strokeWidth={1.75} />
+              Suspended
+            </div>
+            <div className="text-4xl font-bold mt-3 text-brand-wine">
               {loading
                 ? "—"
                 : organizations.filter((o) => o.status === "suspended").length}
@@ -102,48 +128,58 @@ const OwnerDashboard = () => {
         </div>
 
         {/* Platform Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <div className="text-gray-500 text-sm">Total Voters</div>
-            <div className="text-5xl font-bold mt-4 text-blue-600">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition">
+            <div className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+              Total Voters
+            </div>
+            <div className="text-4xl font-bold mt-3 text-gray-900">
               {loading ? "—" : (stats.totalVoters ?? 0)}
             </div>
           </div>
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <div className="text-gray-500 text-sm">Total Votes Cast</div>
-            <div className="text-5xl font-bold mt-4 text-green-600">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition">
+            <div className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+              Total Votes Cast
+            </div>
+            <div className="text-4xl font-bold mt-3 text-brand-green">
               {loading ? "—" : (stats.totalVotes ?? 0)}
             </div>
           </div>
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <div className="text-gray-500 text-sm">Total Admins</div>
-            <div className="text-5xl font-bold mt-4 text-purple-600">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition">
+            <div className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+              Total Admins
+            </div>
+            <div className="text-4xl font-bold mt-3 text-gray-900">
               {loading ? "—" : (stats.totalAdmins ?? 0)}
             </div>
           </div>
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <div className="text-gray-500 text-sm">Total Candidates</div>
-            <div className="text-5xl font-bold mt-4 text-orange-600">
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition">
+            <div className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+              Total Candidates
+            </div>
+            <div className="text-4xl font-bold mt-3 text-brand-yellow">
               {loading ? "—" : (stats.totalCandidates ?? 0)}
             </div>
           </div>
         </div>
 
         {/* Quick Register Card */}
-        <div className="bg-white rounded-3xl shadow p-10 max-w-lg">
-          <h2 className="text-2xl font-semibold mb-6">
+
+        <button
+          onClick={() => navigate("/owner/register-organization")}
+          className="p-6 border border-gray-200 hover:border-brand-green hover:bg-brand-green-soft/30 rounded-2xl text-left transition"
+        >
+          <div className="w-11 h-11 rounded-xl bg-brand-green-soft flex items-center justify-center mb-4">
+            <UserPlus className="w-5 h-5 text-brand-green" strokeWidth={1.75} />
+          </div>
+          <h4 className="font-semibold text-gray-900">
             Quick Register New Election
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Create a new faculty election and generate SuperAdmin credentials
+          </h4>
+          <p className="text-sm text-gray-500 mt-6">
+            {" "}
+            Create a new election and generate SuperAdmin credentials
           </p>
-          <a
-            href="/owner/register-organization"
-            className="inline-block px-8 py-4 bg-indigo-600 text-white font-semibold rounded-2xl hover:bg-indigo-700 transition"
-          >
-            Register New Election →
-          </a>
-        </div>
+        </button>
       </div>
     </OwnerLayout>
   );

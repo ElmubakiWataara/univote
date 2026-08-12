@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../config/api";
+import { ShieldCheck } from "lucide-react";
 
 const OwnerLogin = () => {
   const [username, setUsername] = useState("");
@@ -36,11 +37,17 @@ const OwnerLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md">
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-gray-900">Owner Login</h1>
-          <p className="text-gray-500 mt-2">Platform Administrator</p>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-brand-yellow-soft flex items-center justify-center mb-4">
+            <ShieldCheck
+              className="w-6 h-6 text-brand-yellow"
+              strokeWidth={1.75}
+            />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Owner Login</h1>
+          <p className="text-gray-500 text-sm mt-2">Platform Administrator</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -52,7 +59,7 @@ const OwnerLogin = () => {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600 text-lg"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none transition focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
               placeholder="Enter username"
               required
             />
@@ -66,17 +73,21 @@ const OwnerLogin = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600 text-lg"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none transition focus:ring-2 focus:ring-brand-green/20 focus:border-brand-green"
               required
             />
           </div>
 
-          {error && <p className="text-red-600 text-center">{error}</p>}
+          {error && (
+            <div className="text-center font-medium bg-brand-wine-soft text-brand-wine px-4 py-3 rounded-xl text-sm">
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-lg rounded-2xl transition disabled:opacity-70"
+            className="w-full py-3.5 bg-brand-green hover:bg-brand-green/90 text-white font-semibold text-lg rounded-xl transition disabled:opacity-60"
           >
             {loading ? "Logging in..." : "Login as Owner"}
           </button>

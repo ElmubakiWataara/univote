@@ -171,16 +171,16 @@ const ManageOrganizations = () => {
     <OwnerLayout>
       <div>
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Manage Elections</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Manage Elections</h1>
         </div>
 
         {success && (
-          <div className="mb-6 p-4 bg-green-50 text-green-700 rounded-2xl">
+          <div className="mb-6 p-4 bg-brand-green-soft text-brand-green rounded-2xl">
             {success}
           </div>
         )}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-2xl">
+          <div className="mb-6 p-4 bg-brand-wine-soft text-brand-wine rounded-2xl">
             {error}
           </div>
         )}
@@ -210,14 +210,14 @@ const ManageOrganizations = () => {
                     </td>
                   </tr>
                 ) : (
-                  organizations.map((org, index) => (
+                  organizations.map((org) => (
                     <tr
                       key={org.id}
                       className="hover:bg-gray-50 cursor-pointer"
                       onClick={() => setSelectedOrg(org)}
                     >
                       <td className="py-5 px-8">{org.id}</td>
-                      <td className="py-5 px-8 font-medium text-indigo-600">
+                      <td className="py-5 px-8 font-medium text-brand-wine">
                         {org.name}
                       </td>
                       <td className="py-5 px-8">{org.email}</td>
@@ -228,13 +228,13 @@ const ManageOrganizations = () => {
                       >
                         <button
                           onClick={() => openEditModal(org)}
-                          className="text-blue-600 hover:text-blue-700 font-medium"
+                          className="text-brand-wine hover:text-brand-wine/80 font-medium"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(org.id, org.name)}
-                          className="text-red-600 hover:text-red-700 font-medium"
+                          className="text-brand-wine hover:text-brand-wine/80 font-medium"
                         >
                           Delete
                         </button>
@@ -250,10 +250,10 @@ const ManageOrganizations = () => {
                           }
                           className={`px-4 py-2 text-sm font-medium border-0 cursor-pointer rounded-full ${
                             org.status === "active"
-                              ? "bg-green-100 text-green-700"
+                              ? "bg-brand-green-soft text-brand-green"
                               : org.status === "suspended"
-                                ? "bg-red-100 text-red-700"
-                                : "bg-yellow-100 text-yellow-700"
+                                ? "bg-brand-wine-soft text-brand-wine"
+                                : "bg-brand-yellow-soft text-brand-yellow"
                           }`}
                         >
                           <option value="pending">Pending</option>
@@ -282,7 +282,9 @@ const ManageOrganizations = () => {
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-8">
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h2 className="text-2xl font-bold">{selectedOrg.name}</h2>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {selectedOrg.name}
+                </h2>
                 <p className="text-gray-500 text-sm mt-1">
                   Organization Details
                 </p>
@@ -313,10 +315,10 @@ const ManageOrganizations = () => {
                 <span
                   className={`px-3 py-1 rounded-full text-xs font-medium ${
                     selectedOrg.status === "active"
-                      ? "bg-green-100 text-green-700"
+                      ? "bg-brand-green-soft text-brand-green"
                       : selectedOrg.status === "suspended"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-yellow-100 text-yellow-700"
+                        ? "bg-brand-wine-soft text-brand-wine"
+                        : "bg-brand-yellow-soft text-brand-yellow"
                   }`}
                 >
                   {selectedOrg.status}
@@ -334,6 +336,7 @@ const ManageOrganizations = () => {
                   {new Date(selectedOrg.updated_at).toLocaleString()}
                 </span>
               </div>
+
               <button
                 onClick={() => openAuditLogs(selectedOrg)}
                 className="w-full py-3 bg-gray-800 text-white font-medium rounded-2xl hover:bg-gray-900"
@@ -348,7 +351,7 @@ const ManageOrganizations = () => {
                   setSelectedOrg(null);
                   openEditModal(selectedOrg);
                 }}
-                className="w-full py-3 bg-indigo-600 text-white font-medium rounded-2xl hover:bg-indigo-700"
+                className="w-full py-3 bg-brand-wine text-white font-medium rounded-2xl hover:bg-brand-wine/90"
               >
                 Edit Organization
               </button>
@@ -356,9 +359,9 @@ const ManageOrganizations = () => {
               <button
                 onClick={() => handleResetElection(selectedOrg)}
                 disabled={resetting}
-                className="w-full py-3 bg-red-600 text-white font-medium rounded-2xl hover:bg-red-700 disabled:opacity-70"
+                className="w-full py-3 bg-brand-wine text-white font-semibold rounded-2xl hover:bg-brand-wine/90 disabled:opacity-70"
               >
-                {resetting ? "Resetting..." : " Reset Election Data"}
+                {resetting ? "Resetting..." : "Reset Election Data"}
               </button>
 
               <button
@@ -376,7 +379,9 @@ const ManageOrganizations = () => {
       {editingOrg && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8">
-            <h2 className="text-2xl font-bold mb-6">Edit Organization</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Edit Organization
+            </h2>
 
             <form onSubmit={handleUpdate} className="space-y-6">
               <div>
@@ -389,7 +394,7 @@ const ManageOrganizations = () => {
                   onChange={(e) =>
                     setEditForm({ ...editForm, name: e.target.value })
                   }
-                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-brand-wine"
                   required
                 />
               </div>
@@ -404,7 +409,7 @@ const ManageOrganizations = () => {
                   onChange={(e) =>
                     setEditForm({ ...editForm, email: e.target.value })
                   }
-                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-brand-wine"
                   required
                 />
               </div>
@@ -419,7 +424,7 @@ const ManageOrganizations = () => {
                   onChange={(e) =>
                     setEditForm({ ...editForm, phone: e.target.value })
                   }
-                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-brand-wine"
                 />
               </div>
 
@@ -433,7 +438,7 @@ const ManageOrganizations = () => {
                   onChange={(e) =>
                     setEditForm({ ...editForm, password: e.target.value })
                   }
-                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-600"
+                  className="w-full px-6 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-brand-wine"
                   placeholder="Leave blank to keep current password"
                 />
                 <p className="text-xs text-gray-500 mt-2">
@@ -452,7 +457,7 @@ const ManageOrganizations = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 py-4 bg-indigo-600 text-white font-semibold rounded-2xl hover:bg-indigo-700 disabled:opacity-70"
+                  className="flex-1 py-4 bg-brand-wine text-white font-semibold rounded-2xl hover:bg-brand-wine/90 disabled:opacity-70"
                 >
                   {submitting ? "Updating..." : "Save Changes"}
                 </button>
@@ -466,10 +471,9 @@ const ManageOrganizations = () => {
       {showLogs && logsOrg && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
-            {/* Header */}
             <div className="p-6 border-b flex justify-between items-center">
               <div>
-                <h2 className="text-2xl font-bold">Audit Logs</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Audit Logs</h2>
                 <p className="text-gray-500 text-sm mt-1">
                   {logsOrg.name} (ID: {logsOrg.id})
                 </p>
@@ -486,7 +490,6 @@ const ManageOrganizations = () => {
               </button>
             </div>
 
-            {/* Body */}
             <div className="flex-1 overflow-auto p-6">
               {logsLoading ? (
                 <div className="text-center py-16 text-gray-500">
@@ -541,7 +544,6 @@ const ManageOrganizations = () => {
               )}
             </div>
 
-            {/* Footer */}
             <div className="p-6 border-t text-right">
               <button
                 onClick={() => {

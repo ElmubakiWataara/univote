@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../config/api";
+import { Inbox, PartyPopper, Camera, User } from "lucide-react";
 
 const VotingPage = () => {
   const [positions, setPositions] = useState([]);
@@ -28,8 +29,8 @@ const VotingPage = () => {
 
     if (!src || failed) {
       return (
-        <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200 flex items-center justify-center text-3xl text-gray-400">
-          📸
+        <div className="w-14 h-14 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200 flex items-center justify-center text-gray-400">
+          <Camera className="w-6 h-6" strokeWidth={1.5} />
         </div>
       );
     }
@@ -139,14 +140,12 @@ const VotingPage = () => {
         return;
       }
 
-      // Prepare votes array for backend
       const votesPayload = Object.entries(selections).map(
         ([position, candidateId]) => ({
           candidate_id: candidateId,
         }),
       );
 
-      // Call new submitBallot endpoint
       const res = await axios.post(
         `${API_URL}/api/vote/submit-ballot`,
         { votes: votesPayload },
@@ -179,7 +178,7 @@ const VotingPage = () => {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center text-gray-500">
         Loading positions...
       </div>
     );
@@ -192,11 +191,13 @@ const VotingPage = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-6xl mb-6">📭</div>
-          <h2 className="text-3xl font-bold text-gray-800">
+          <div className="mx-auto w-16 h-16 rounded-full bg-brand-yellow-soft flex items-center justify-center mb-6">
+            <Inbox className="w-7 h-7 text-brand-yellow" strokeWidth={1.75} />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800">
             No Candidates Available
           </h2>
-          <p className="text-gray-600 mt-4 max-w-md mx-auto">
+          <p className="text-gray-500 mt-3 max-w-md mx-auto text-sm">
             There are no candidates registered for this election yet.
             <br />
             Please contact your election administrator.
@@ -211,11 +212,18 @@ const VotingPage = () => {
 
   if (message) {
     return (
-      <div className="min-h-screen bg-emerald-50 flex items-center justify-center">
+      <div className="min-h-screen bg-brand-green-soft flex items-center justify-center">
         <div className="text-center">
-          <div className="text-7xl mb-6">🎉</div>
-          <h2 className="text-4xl font-bold text-emerald-800">Thank You!</h2>
-          <p className="text-xl text-emerald-700 mt-4">{message}</p>
+          <div className="mx-auto w-20 h-20 rounded-full bg-white flex items-center justify-center mb-6 shadow-sm">
+            <PartyPopper
+              className="w-9 h-9 text-brand-green"
+              strokeWidth={1.75}
+            />
+          </div>
+          <h2 className="text-3xl font-bold text-brand-green">Thank You!</h2>
+          <p className="text-lg text-gray-700 mt-3 max-w-md mx-auto px-6">
+            {message}
+          </p>
         </div>
       </div>
     );
@@ -223,8 +231,6 @@ const VotingPage = () => {
 
   const currentPosition = positions[currentStep];
   const isLastStep = currentStep === positions.length - 1;
-  const hasSelectedCurrent =
-    currentPosition && selections[currentPosition.position];
   const isSkipped =
     currentPosition && skippedPositions.has(currentPosition.position);
 
@@ -232,18 +238,18 @@ const VotingPage = () => {
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-5xl mx-auto px-6">
         {/* Progress */}
-        <div className="mb-10">
+        <div className="mb-8">
           <div className="flex justify-between text-sm mb-2 text-gray-500">
             <span>
               Position {currentStep + 1} of {positions.length}
             </span>
-            <span className="font-medium text-indigo-600">
+            <span className="font-medium text-brand-green">
               {currentPosition?.position}
             </span>
           </div>
-          <div className="h-2 bg-gray-200 rounded-full">
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-indigo-600 rounded-full transition-all"
+              className="h-full bg-brand-green rounded-full transition-all"
               style={{
                 width: `${((currentStep + 1) / positions.length) * 100}%`,
               }}
@@ -251,85 +257,122 @@ const VotingPage = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl p-10">
-          <h2 className="text-3xl font-bold text-center mb-10">
-            {currentPosition?.position}
-          </h2>
-          <button
-            onClick={() => skipPosition(currentPosition.position)}
-            className={`px-6 py-2 mb-2 border rounded-2xl transition text-lg font-medium ${
-              skippedPositions.has(currentPosition.position)
-                ? "bg-green-700 text-white border-green-700"
-                : "text-gray-600 border-gray-300 hover:bg-green-500 hover:text-white"
-            }`}
-          >
-            {skippedPositions.has(currentPosition.position)
-              ? "Skipped"
-              : "Skip"}
-          </button>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 md:p-10">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">
+              {currentPosition?.position}
+            </h2>
+            <button
+              onClick={() => skipPosition(currentPosition.position)}
+              className={`px-5 py-2 border rounded-xl transition text-sm font-medium ${
+                isSkipped
+                  ? "bg-brand-yellow text-white border-brand-yellow"
+                  : "text-gray-600 border-gray-200 hover:border-brand-yellow hover:text-brand-yellow"
+              }`}
+            >
+              {isSkipped ? "Skipped" : "Skip"}
+            </button>
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {currentPosition?.candidates.map((candidate) => (
-              <div
-                key={candidate.id}
-                onClick={() =>
-                  selectCandidate(currentPosition.position, candidate.id)
-                }
-                className={`border-2 rounded-3xl p-8 cursor-pointer transition-all hover:shadow-md ${
-                  selections[currentPosition.position] === candidate.id
-                    ? "border-indigo-600 bg-indigo-50"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-              >
-                <div className="flex gap-4">
-                  <div className="w-35 h-35 bg-gray-100 rounded-2xl overflow-hidden flex-shrink-0">
-                    {candidate.photo_url ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {currentPosition?.candidates.map((candidate) => {
+              const isSelected =
+                selections[currentPosition.position] === candidate.id;
+
+              const imageSrc = candidate.photo_url
+                ? candidate.photo_url.startsWith("http")
+                  ? candidate.photo_url
+                  : `${API_URL}${candidate.photo_url}`
+                : null;
+
+              return (
+                <div
+                  key={candidate.id}
+                  onClick={() =>
+                    selectCandidate(currentPosition.position, candidate.id)
+                  }
+                  className={`relative rounded-3xl overflow-hidden cursor-pointer border-2 transition-all ${
+                    isSelected
+                      ? "border-brand-wine shadow-lg shadow-brand-wine/20"
+                      : "border-gray-100 hover:border-brand-wine/30"
+                  }`}
+                >
+                  {/* Photo */}
+                  <div className="relative h-56 sm:h-64 md:h-72 bg-brand-wine-soft overflow-hidden">
+                    {imageSrc ? (
                       <img
-                        src={candidate.photo_url}
+                        src={imageSrc}
                         alt={candidate.name}
-                        className="w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover object-top"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          e.currentTarget.nextSibling?.classList.remove(
+                            "hidden",
+                          );
+                        }}
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-5xl">
-                        👤
+                    ) : null}
+
+                    {/* Fallback (shown if no image or load fails) */}
+                    <div
+                      className={`absolute inset-0 flex items-center justify-center text-brand-wine/40 ${
+                        imageSrc ? "hidden" : ""
+                      }`}
+                    >
+                      <User className="w-16 h-16" strokeWidth={1.5} />
+                    </div>
+
+                    {/* Name overlay */}
+                    <div className="absolute bottom-0 left-0 right-0  px-4 pb-4 pt-10">
+                      <h3 className="text-lg font-semibold text-wine uppercase leading-tight drop-shadow">
+                        {candidate.position}
+                      </h3>
+                    </div>
+
+                    {/* Selected check */}
+                    {isSelected && (
+                      <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-brand-wine text-white flex items-center justify-center shadow">
+                        ✓
                       </div>
                     )}
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-3xl">{candidate.name}</h3>
-                    <p className="text-indigo-600 mt-1">{candidate.position}</p>
-                    {candidate.yes_or_no && (
-                      <p className="text-red-600 mt-4 text-6xl line-clamp-3, ">
-                        {candidate.yes_or_no}
-                      </p>
-                    )}
-                  </div>
-                </div>
 
-                <div className="mt-8 flex justify-end">
-                  <div
-                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center ${
-                      selections[currentPosition.position] === candidate.id
-                        ? "border-indigo-600 bg-indigo-600"
-                        : "border-gray-300"
-                    }`}
-                  >
-                    {selections[currentPosition.position] === candidate.id && (
-                      <div className="w-3.5 h-3.5 bg-white rounded-full" />
-                    )}
+                  {/* Footer */}
+                  <div className="bg-brand-green text-white px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-2xl font-bold uppercase tracking-wide flex items-center gap-1">
+                        <span className="opacity-70"></span>
+                        {candidate.name}
+                      </p>
+                      {candidate.yes_or_no && (
+                        <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-[14px] font-semibold bg-brand-wine">
+                          {candidate.yes_or_no}
+                        </span>
+                      )}
+                    </div>
+
+                    <div
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                        isSelected ? "border-white bg-white" : "border-white/50"
+                      }`}
+                    >
+                      {isSelected && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-brand-wine" />
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
         {/* Navigation */}
-        <div className="flex justify-between mt-12">
+        <div className="flex justify-between mt-10">
           <button
             onClick={goToPrevious}
             disabled={currentStep === 0}
-            className="px-12 py-4 bg-red-600 text-white border border-gray-300 rounded-2xl font-medium disabled:opacity-300 hover:bg-red-700"
+            className="px-10 py-3.5 bg-white text-gray-700 border border-gray-200 rounded-xl font-medium disabled:opacity-40 hover:bg-brand-yellow/50 transition"
           >
             Previous Position
           </button>
@@ -338,14 +381,14 @@ const VotingPage = () => {
             <button
               onClick={handleSubmitAllVotes}
               disabled={submitting}
-              className="px-12 py-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-2xl transition disabled:opacity-70"
+              className="px-10 py-3.5 bg-brand-green hover:bg-brand-green/90 text-white font-semibold rounded-xl transition disabled:opacity-70"
             >
               {submitting ? "Submitting..." : "Submit Ballot"}
             </button>
           ) : (
             <button
               onClick={goToNext}
-              className="px-12 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-2xl transition"
+              className="px-10 py-3.5 bg-brand-green hover:bg-brand-green/90 text-white font-semibold rounded-xl transition"
             >
               Next Position →
             </button>

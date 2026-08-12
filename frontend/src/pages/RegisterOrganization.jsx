@@ -1,4 +1,3 @@
-// frontend/src/pages/RegisterOrganization.jsx
 import { useState } from "react";
 import OwnerLayout from "../components/OwnerLayout";
 import axios from "axios";
@@ -18,6 +17,9 @@ const RegisterOrganization = () => {
 
   const { token: authToken } = useAuth();
 
+  const inputClass =
+    "w-full px-5 py-3.5 bg-gray-50 border border-gray-100 rounded-full outline-none transition focus:ring-2 focus:ring-brand-wine/20 focus:border-brand-wine";
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -25,11 +27,9 @@ const RegisterOrganization = () => {
     setSuccess("");
 
     try {
-      const res = await axios.post(
-        `${API_URL}/api/owner/organizations`,
-        formData,
-        { headers: { Authorization: `Bearer ${authToken}` } },
-      );
+      await axios.post(`${API_URL}/api/owner/organizations`, formData, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
 
       setSuccess("Organization registered successfully!");
       setFormData({ name: "", email: "", phone: "", password: "" });
@@ -44,13 +44,22 @@ const RegisterOrganization = () => {
 
   return (
     <OwnerLayout>
-      <div className="max-w-lg">
-        <h1 className="text-3xl font-bold mb-8">Register New Election</h1>
+      <div className="max-w-2xl">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-1">
+          Register New Election
+        </h1>
+        <p className="text-gray-500 mb-8">
+          Create a election and SuperAdmin login credentials.
+        </p>
 
-        <div className="bg-white rounded-3xl shadow p-10">
+        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 md:p-10">
+          <h2 className="text-lg font-semibold text-gray-800 mb-8">
+            Basic Details
+          </h2>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm text-gray-600 mb-2">
                 Organization Name
               </label>
               <input
@@ -59,42 +68,47 @@ const RegisterOrganization = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="w-full px-6 py-4 border border-gray-300 rounded-2xl"
+                className={inputClass}
+                placeholder="e.g. CSISA"
                 required
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email (SuperAdmin Login)
-              </label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                className="w-full px-6 py-4 border border-gray-300 rounded-2xl"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm text-gray-600 mb-2">
+                  Email (SuperAdmin Login)
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className={inputClass}
+                  placeholder="CSISA@esofa.edu"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-600 mb-2">
+                  Phone (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                  className={inputClass}
+                  placeholder="0551234567"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phone (Optional)
-              </label>
-              <input
-                type="text"
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                className="w-full px-6 py-4 border border-gray-300 rounded-2xl"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm text-gray-600 mb-2">
                 Password for SuperAdmin
               </label>
               <input
@@ -103,7 +117,8 @@ const RegisterOrganization = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                className="w-full px-6 py-4 border border-gray-300 rounded-2xl"
+                className={inputClass}
+                placeholder="Minimum 6 characters"
                 required
               />
             </div>
@@ -111,16 +126,22 @@ const RegisterOrganization = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-4 bg-indigo-600 text-white font-semibold rounded-2xl hover:bg-indigo-700 transition"
+              className="w-full py-4 bg-brand-wine hover:bg-brand-wine/90 text-white font-semibold text-lg rounded-full transition disabled:opacity-60"
             >
               {submitting ? "Registering..." : "Register Election"}
             </button>
           </form>
 
           {success && (
-            <p className="mt-6 text-green-600 font-medium">{success}</p>
+            <div className="mt-6 px-4 py-3 rounded-2xl bg-brand-green-soft text-brand-green font-medium text-sm">
+              {success}
+            </div>
           )}
-          {error && <p className="mt-6 text-red-600">{error}</p>}
+          {error && (
+            <div className="mt-6 px-4 py-3 rounded-2xl bg-brand-wine-soft text-brand-wine font-medium text-sm">
+              {error}
+            </div>
+          )}
         </div>
       </div>
     </OwnerLayout>
