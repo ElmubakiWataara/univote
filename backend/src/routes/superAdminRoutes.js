@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const uploadElectionLogo = require("../middleware/uploadElectionLogo");
+const {
+  upload: uploadElectionLogo,
+} = require("../middleware/uploadElectionLogo");
 
 const { authenticate, authorizeRole } = require("../middleware/auth");
 const {

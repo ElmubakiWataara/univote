@@ -222,100 +222,138 @@ const bulkRegisterVoters = async (req, res) => {
   const file = req.file;
 
   if (!file) {
-    return res
-      .status(400)
-      .json({ success: false, message: "No file uploaded" });
+    return res.status(400).json({
+      success: false,
+      message: "No file uploaded",
+    });
   }
 
   try {
     const csv = require("csv-parser");
-    const fs = require("fs");
+    const { Readable } = require("stream");
+
     const results = [];
+
+    // Read CSV from Multer memory buffer
+    await new Promise((resolve, reject) => {
+      Readable.from(file.buffer)
+        .pipe(csv())
+        .on("data", (row) => results.push(row))
+        .on("end", resolve)
+        .on("error", reject);
+    });
+
     const errors = [];
     let successCount = 0;
 
-    fs.createReadStream(file.path)
-      .pipe(csv())
-      .on("data", (row) => results.push(row))
-      .on("end", async () => {
-        for (const row of results) {
-          try {
-            let student_id = (row.student_id || "").trim().toUpperCase();
-            let full_name = toTitleCase((row.full_name || "").trim());
-            const department = (row.department || "").trim();
-            const email = (row.email || "").trim();
+    // Process each voter
+    for (const row of results) {
+      try {
+        const student_id = (row.student_id || "").trim().toUpperCase();
 
-            if (!student_id || !full_name) {
-              errors.push({ row, reason: "Missing student_id or full_name" });
-              continue;
-            }
+        const full_name = toTitleCase((row.full_name || "").trim());
 
-            if (!isValidStudentId(student_id)) {
-              errors.push({
-                row,
-                reason:
-                  "Invalid student_id format (only letters and numbers allowed)",
-              });
-              continue;
-            }
+        const department = (row.department || "").trim();
+        const email = (row.email || "").trim();
 
-            if (email && !isValidEmail(email)) {
-              errors.push({ row, reason: "Invalid email format" });
-              continue;
-            }
-
-            const dbResult = await pool.query(
-              `
-              INSERT INTO voters (student_id, full_name, department, email, organization_id)
-              VALUES ($1, $2, $3, $4, $5)
-              ON CONFLICT (organization_id, student_id) DO NOTHING
-              RETURNING id, student_id, full_name
-            `,
-              [student_id, full_name, department, email, organizationId],
-            );
-
-            if (dbResult.rows.length > 0) successCount++;
-            else errors.push({ row, reason: "Student ID already exists" });
-          } catch (err) {
-            errors.push({ row, reason: err.message });
-          }
+        // Validate required fields
+        if (!student_id || !full_name) {
+          errors.push({
+            row,
+            reason: "Missing student_id or full_name",
+          });
+          continue;
         }
 
-        // Audit log for bulk action
-        await pool.query(
+        // Validate student ID
+        if (!isValidStudentId(student_id)) {
+          errors.push({
+            row,
+            reason:
+              "Invalid student_id format (only letters and numbers allowed)",
+          });
+          continue;
+        }
+
+        // Validate email
+        if (email && !isValidEmail(email)) {
+          errors.push({
+            row,
+            reason: "Invalid email format",
+          });
+          continue;
+        }
+
+        // Insert voter
+        const dbResult = await pool.query(
           `
-          INSERT INTO audit_logs (action, actor_id, actor_role, details, organization_id)
-          VALUES ($1, $2, $3, $4, $5)
-        `,
-          [
-            "BULK_VOTER_REGISTERED",
-            adminId,
-            req.user.role,
-            {
-              total: results.length,
-              success: successCount,
-              failed: errors.length,
-            },
-            organizationId,
-          ],
+          INSERT INTO voters
+            (student_id, full_name, department, email, organization_id)
+          VALUES
+            ($1, $2, $3, $4, $5)
+          ON CONFLICT (organization_id, student_id)
+          DO NOTHING
+          RETURNING id, student_id, full_name
+          `,
+          [student_id, full_name, department, email, organizationId],
         );
 
-        res.json({
-          success: true,
-          message: `Bulk registration completed. ${successCount} added, ${errors.length} failed.`,
-          summary: {
-            total: results.length,
-            success: successCount,
-            failed: errors.length,
-            errors,
-          },
+        if (dbResult.rows.length > 0) {
+          successCount++;
+        } else {
+          errors.push({
+            row,
+            reason: "Student ID already exists",
+          });
+        }
+      } catch (err) {
+        console.error("Error processing voter:", err);
+
+        errors.push({
+          row,
+          reason: err.message,
         });
-      });
+      }
+    }
+
+    // Audit log
+    await pool.query(
+      `
+      INSERT INTO audit_logs
+        (action, actor_id, actor_role, details, organization_id)
+      VALUES
+        ($1, $2, $3, $4, $5)
+      `,
+      [
+        "BULK_VOTER_REGISTERED",
+        adminId,
+        req.user.role,
+        JSON.stringify({
+          total: results.length,
+          success: successCount,
+          failed: errors.length,
+        }),
+        organizationId,
+      ],
+    );
+
+    return res.json({
+      success: true,
+      message: `Bulk registration completed. ${successCount} added, ${errors.length} failed.`,
+      summary: {
+        total: results.length,
+        success: successCount,
+        failed: errors.length,
+        errors,
+      },
+    });
   } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ success: false, message: "Bulk registration failed" });
+    console.error("BULK REGISTER ERROR:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Bulk registration failed",
+    });
   }
 };
 

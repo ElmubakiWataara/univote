@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const upload = require("../middleware/uploadElectionLogo");
+const { upload, csvUpload } = require("../middleware/uploadElectionLogo");
 
 const { authenticate, authorizeRole } = require("../middleware/auth");
 const {
@@ -33,7 +33,14 @@ router.delete("/voters/:id", deleteVoter);
 router.put("/candidates/:id", updateCandidate);
 router.delete("/candidates/:id", deleteCandidate);
 router.get("/results", getResults);
-router.post("/voters/bulk", upload.single("file"), bulkRegisterVoters);
+// router.post("/voters/bulk", upload.single("file"), bulkRegisterVoters);
+router.post(
+  "/voters/bulk",
+  authenticate,
+  authorizeRole(["admin", "superadmin"]),
+  csvUpload.single("file"),
+  bulkRegisterVoters,
+);
 router.get("/election-settings", getElectionSettings);
 
 module.exports = router;
