@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 //for icons
+import esofaLogo from "../assets/EsofaVotes.svg";
 import {
   LayoutDashboard,
   UserPlus,
@@ -136,8 +137,13 @@ const AdminLayout = ({ children }) => {
       >
         {/* Logo */}
         <div className="p-6 flex items-center gap-3 border-b border-white/10">
-          <div className="w-10 h-10 bg-brand-green rounded-2xl flex items-center justify-center">
-            <Vote className="w-5 h-5 text-white" strokeWidth={1.75} />
+          <div className="w-16 h-16 bg-brand-green rounded-2xl flex items-center justify-center">
+            {/* <Vote className="w-5 h-5 text-white" strokeWidth={1.75} /> */}
+            <img
+              src={esofaLogo}
+              alt="Esofa Votes"
+              className="w-full h-full object-contain"
+            />
           </div>
           {sidebarOpen && (
             <span className="font-bold text-2xl tracking-tight">

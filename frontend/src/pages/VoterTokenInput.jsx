@@ -4,6 +4,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../config/api";
 import { NonBinaryIcon } from "lucide-react";
+import esofaLogo from "../assets/EsofaVotes.svg";
 
 const VoterTokenInput = () => {
   const [token, setToken] = useState("");
@@ -67,6 +68,15 @@ const VoterTokenInput = () => {
 
       {/* Login Card */}
       <div className="relative z-10 bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-10 w-full max-w-md border border-white/50">
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="w-16 h-16 bg-brand-green rounded-2xl flex items-center justify-center">
+            <img
+              src={esofaLogo}
+              alt="Esofa Votes"
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </div>
         {/* Logo */}
         {election.logo && (
           <div className="flex justify-center mb-4">
@@ -84,7 +94,7 @@ const VoterTokenInput = () => {
 
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">{election.title}</h1>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-xl text-gray-500 mt-2">
             Enter your voting token below
           </p>
         </div>

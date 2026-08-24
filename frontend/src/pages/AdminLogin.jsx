@@ -4,6 +4,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import API_URL from "../config/api";
 import { Vote } from "lucide-react";
+import esofaLogo from "../assets/EsofaVotes.svg";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -47,9 +48,13 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="mx-auto w-14 h-14 rounded-2xl bg-brand-green-soft flex items-center justify-center mb-4">
-            <Vote className="w-6 h-6 text-brand-green" strokeWidth={1.75} />
+        <div className="flex flex-col items-center text-center mb-8">
+          <div className="w-16 h-16 bg-brand-green rounded-2xl flex items-center justify-center">
+            <img
+              src={esofaLogo}
+              alt="Esofa Votes"
+              className="w-full h-full object-contain"
+            />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Admin Login</h1>
           <p className="text-gray-500 text-sm mt-2">Esofa Election System</p>
