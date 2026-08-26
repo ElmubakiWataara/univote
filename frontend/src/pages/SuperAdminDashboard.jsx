@@ -14,6 +14,107 @@ import {
 } from "lucide-react";
 import API_URL from "../config/api";
 
+// ---------- Action → visual identity (matches Audit Logs page) ----------
+const ACTION_META = {
+  VOTER_REGISTERED: { label: "Voter Registered", tone: "sky" },
+  BULK_VOTER_REGISTERED: { label: "Bulk Registration", tone: "sky" },
+  CANDIDATE_ADDED: { label: "Candidate Added", tone: "emerald" },
+  CANDIDATE_UPDATED: { label: "Candidate Updated", tone: "emerald" },
+  TOKEN_GENERATED: { label: "Token Generated", tone: "violet" },
+  VOTE_CAST: { label: "Vote Cast", tone: "indigo" },
+  BALLOT_SUBMITTED: { label: "Ballot Submitted", tone: "indigo" },
+  ELECTION_TOGGLE: { label: "Election Toggled", tone: "amber" },
+  ELECTION_CONFIG_UPDATED: { label: "Election Config Updated", tone: "amber" },
+  ADMIN_CREATED: { label: "Admin Created", tone: "slate" },
+  ADMIN_UPDATED: { label: "Admin Updated", tone: "slate" },
+  ADMIN_DELETED: { label: "Admin Deleted", tone: "rose" },
+};
+
+const TONE_CLASSES = {
+  sky: "bg-sky-50 text-sky-700 ring-1 ring-sky-100",
+  emerald: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100",
+  violet: "bg-violet-50 text-violet-700 ring-1 ring-violet-100",
+  indigo: "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100",
+  amber: "bg-amber-50 text-amber-700 ring-1 ring-amber-100",
+  slate: "bg-slate-100 text-slate-700 ring-1 ring-slate-200",
+  rose: "bg-rose-50 text-rose-700 ring-1 ring-rose-100",
+};
+
+const ActionBadge = ({ action }) => {
+  const meta = ACTION_META[action] || { label: action, tone: "slate" };
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${TONE_CLASSES[meta.tone]}`}
+    >
+      {meta.label}
+    </span>
+  );
+};
+
+// ---------- Compact, human-readable summary of a log's details ----------
+// This is a snapshot card, not the full audit log table, so each entry
+// gets ONE short readable line rather than a raw JSON dump or a full
+// breakdown — just enough to know what happened at a glance.
+const parseDetails = (details) => {
+  if (details == null || details === "") return null;
+  if (typeof details === "string") {
+    try {
+      return JSON.parse(details);
+    } catch {
+      return details;
+    }
+  }
+  return details;
+};
+
+const summarizeDetails = (action, details) => {
+  const parsed = parseDetails(details);
+  if (parsed == null) return "—";
+  if (typeof parsed === "string") return parsed;
+
+  // Ballot / vote submissions: "2 votes cast" + who
+  if (Array.isArray(parsed.votes)) {
+    const count = parsed.votes_cast ?? parsed.votes.length;
+    const who = parsed.student_id ? ` by ${parsed.student_id}` : "";
+    return `${count} vote${count === 1 ? "" : "s"} cast${who}`;
+  }
+
+  // Voter registration: show the name
+  if (parsed.full_name) {
+    return `${parsed.full_name}${parsed.student_id ? ` (${parsed.student_id})` : ""}`;
+  }
+
+  // Token generation: who it was for
+  if (parsed.token_value) {
+    return `${parsed.voter_name || parsed.student_id || "Voter"} · token ${parsed.token_value}`;
+  }
+
+  // Election config update
+  if (parsed.title || parsed.academic_year) {
+    return [parsed.title, parsed.academic_year].filter(Boolean).join(" · ");
+  }
+
+  // Election toggle
+  if (typeof parsed.is_active === "boolean") {
+    return parsed.is_active ? "Election activated" : "Election closed";
+  }
+
+  // Generic fallback: first couple of key/value pairs, human-cased
+  return Object.entries(parsed)
+    .slice(0, 3)
+    .map(([key, value]) => {
+      const label = key
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
+      const val =
+        value != null && typeof value === "object"
+          ? JSON.stringify(value)
+          : value;
+      return `${label}: ${val}`;
+    })
+    .join(" · ");
+};
+
 const SuperAdminDashboard = () => {
   const [stats, setStats] = useState({
     totalVoters: 0,
@@ -348,42 +449,27 @@ const SuperAdminDashboard = () => {
               </div>
             </div>
 
-            <div className="space-y-3 text-sm max-h-96 overflow-y-auto">
+            <div className="space-y-1 max-h-96 overflow-y-auto">
               {recentLogs.length > 0 ? (
-                recentLogs.map((log, i) => {
-                  let detailsText = "";
-                  try {
-                    if (typeof log.details === "string") {
-                      const parsed = JSON.parse(log.details);
-                      detailsText = parsed
-                        ? JSON.stringify(parsed, null, 2)
-                        : log.details;
-                    } else {
-                      detailsText = JSON.stringify(log.details);
-                    }
-                  } catch (e) {
-                    detailsText = log.details || "—";
-                  }
-
-                  return (
-                    <div
-                      key={i}
-                      className="flex justify-between py-3 border-b border-gray-100 last:border-0"
-                    >
-                      <div className="flex-1 pr-4">
-                        <span className="font-medium text-gray-800">
-                          {log.action}
-                        </span>
-                        <p className="text-gray-500 text-xs mt-1 break-words">
-                          {detailsText}
-                        </p>
-                      </div>
-                      <div className="text-right text-gray-400 text-xs whitespace-nowrap">
-                        {new Date(log.created_at).toLocaleTimeString()}
-                      </div>
+                recentLogs.map((log, i) => (
+                  <div
+                    key={log.id ?? i}
+                    className="flex items-start justify-between gap-3 py-3 border-b border-gray-100 last:border-0"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <ActionBadge action={log.action} />
+                      <p className="text-gray-600 text-sm mt-1.5 truncate">
+                        {summarizeDetails(log.action, log.details)}
+                      </p>
                     </div>
-                  );
-                })
+                    <div className="text-gray-400 text-xs whitespace-nowrap pt-0.5">
+                      {new Date(log.created_at).toLocaleTimeString([], {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  </div>
+                ))
               ) : (
                 <p className="text-gray-400 py-12 text-center">
                   No recent activity yet
